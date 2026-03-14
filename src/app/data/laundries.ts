@@ -48,13 +48,13 @@ export const laundries: Laundry[] = [
     discount: '20% OFF',
     address: '14 Tahrir Square, Cairo',
     services: [
-      { id: 'wash-kg',    name: 'Wash & Fold',        category: 'wash',      price: 15,  unit: 'per kg',   available: true,  turnaround: '2 hrs' },
-      { id: 'wash-dry',   name: 'Wash & Dry',         category: 'wash',      price: 18,  unit: 'per kg',   available: true,  turnaround: '3 hrs' },
-      { id: 'iron-shirt', name: 'Iron – Shirt',       category: 'iron',      price: 10,  unit: 'per item', available: true,  turnaround: '1 hr'  },
-      { id: 'iron-suit',  name: 'Iron – Suit',        category: 'iron',      price: 22,  unit: 'per item', available: true,  turnaround: '2 hrs' },
-      { id: 'dry-shirt',  name: 'Dry Clean – Shirt',  category: 'dry_clean', price: 35,  unit: 'per item', available: true,  turnaround: '24 hrs'},
-      { id: 'dry-dress',  name: 'Dry Clean – Dress',  category: 'dry_clean', price: 55,  unit: 'per item', available: true,  turnaround: '24 hrs'},
-      { id: 'sp-blanket', name: 'Blanket / Duvet',    category: 'specialty', price: 80,  unit: 'per item', available: true,  turnaround: '48 hrs'},
+      { id: 'wash-kg', name: 'Wash & Fold', category: 'wash', price: 15, unit: 'per kg', available: true, turnaround: '2 hrs' },
+      { id: 'wash-dry', name: 'Wash & Dry', category: 'wash', price: 18, unit: 'per kg', available: true, turnaround: '3 hrs' },
+      { id: 'iron-shirt', name: 'Iron – Shirt', category: 'iron', price: 10, unit: 'per item', available: true, turnaround: '1 hr' },
+      { id: 'iron-suit', name: 'Iron – Suit', category: 'iron', price: 22, unit: 'per item', available: true, turnaround: '2 hrs' },
+      { id: 'dry-shirt', name: 'Dry Clean – Shirt', category: 'dry_clean', price: 35, unit: 'per item', available: true, turnaround: '24 hrs' },
+      { id: 'dry-dress', name: 'Dry Clean – Dress', category: 'dry_clean', price: 55, unit: 'per item', available: true, turnaround: '24 hrs' },
+      { id: 'sp-blanket', name: 'Blanket / Duvet', category: 'specialty', price: 80, unit: 'per item', available: true, turnaround: '48 hrs' },
     ],
   },
   {
@@ -70,11 +70,11 @@ export const laundries: Laundry[] = [
     isAvailable: true,
     address: '7 El-Nasr Road, New Cairo',
     services: [
-      { id: 'wash-kg',    name: 'Wash & Fold',        category: 'wash',      price: 12,  unit: 'per kg',   available: true,  turnaround: '3 hrs' },
-      { id: 'iron-shirt', name: 'Iron – Shirt',       category: 'iron',      price: 8,   unit: 'per item', available: true,  turnaround: '1 hr'  },
-      { id: 'iron-trouser', name: 'Iron – Trousers',  category: 'iron',      price: 10,  unit: 'per item', available: true,  turnaround: '1 hr'  },
-      { id: 'dry-shirt',  name: 'Dry Clean – Shirt',  category: 'dry_clean', price: 30,  unit: 'per item', available: true,  turnaround: '24 hrs'},
-      { id: 'sp-blanket', name: 'Blanket / Duvet',    category: 'specialty', price: 70,  unit: 'per item', available: false, turnaround: '48 hrs'},
+      { id: 'wash-kg', name: 'Wash & Fold', category: 'wash', price: 12, unit: 'per kg', available: true, turnaround: '3 hrs' },
+      { id: 'iron-shirt', name: 'Iron – Shirt', category: 'iron', price: 8, unit: 'per item', available: true, turnaround: '1 hr' },
+      { id: 'iron-trouser', name: 'Iron – Trousers', category: 'iron', price: 10, unit: 'per item', available: true, turnaround: '1 hr' },
+      { id: 'dry-shirt', name: 'Dry Clean – Shirt', category: 'dry_clean', price: 30, unit: 'per item', available: true, turnaround: '24 hrs' },
+      { id: 'sp-blanket', name: 'Blanket / Duvet', category: 'specialty', price: 70, unit: 'per item', available: false, turnaround: '48 hrs' },
     ],
   },
   {
@@ -92,14 +92,14 @@ export const laundries: Laundry[] = [
     discount: '15% OFF',
     address: '3 Al-Haram Street, Giza',
     services: [
-      { id: 'wash-kg',    name: 'Wash & Fold',        category: 'wash',      price: 18,  unit: 'per kg',   available: true,  turnaround: '1.5 hrs'},
-      { id: 'wash-dry',   name: 'Wash & Dry',         category: 'wash',      price: 22,  unit: 'per kg',   available: true,  turnaround: '2 hrs' },
-      { id: 'iron-shirt', name: 'Iron – Shirt',       category: 'iron',      price: 12,  unit: 'per item', available: true,  turnaround: '45 min'},
-      { id: 'iron-suit',  name: 'Iron – Suit',        category: 'iron',      price: 25,  unit: 'per item', available: true,  turnaround: '1.5 hrs'},
-      { id: 'dry-shirt',  name: 'Dry Clean – Shirt',  category: 'dry_clean', price: 40,  unit: 'per item', available: true,  turnaround: '24 hrs'},
-      { id: 'dry-coat',   name: 'Dry Clean – Coat',   category: 'dry_clean', price: 75,  unit: 'per item', available: true,  turnaround: '36 hrs'},
-      { id: 'sp-blanket', name: 'Blanket / Duvet',    category: 'specialty', price: 90,  unit: 'per item', available: true,  turnaround: '48 hrs'},
-      { id: 'sp-curtain', name: 'Curtains',           category: 'specialty', price: 120, unit: 'per set',  available: true,  turnaround: '72 hrs'},
+      { id: 'wash-kg', name: 'Wash & Fold', category: 'wash', price: 18, unit: 'per kg', available: true, turnaround: '1.5 hrs' },
+      { id: 'wash-dry', name: 'Wash & Dry', category: 'wash', price: 22, unit: 'per kg', available: true, turnaround: '2 hrs' },
+      { id: 'iron-shirt', name: 'Iron – Shirt', category: 'iron', price: 12, unit: 'per item', available: true, turnaround: '45 min' },
+      { id: 'iron-suit', name: 'Iron – Suit', category: 'iron', price: 25, unit: 'per item', available: true, turnaround: '1.5 hrs' },
+      { id: 'dry-shirt', name: 'Dry Clean – Shirt', category: 'dry_clean', price: 40, unit: 'per item', available: true, turnaround: '24 hrs' },
+      { id: 'dry-coat', name: 'Dry Clean – Coat', category: 'dry_clean', price: 75, unit: 'per item', available: true, turnaround: '36 hrs' },
+      { id: 'sp-blanket', name: 'Blanket / Duvet', category: 'specialty', price: 90, unit: 'per item', available: true, turnaround: '48 hrs' },
+      { id: 'sp-curtain', name: 'Curtains', category: 'specialty', price: 120, unit: 'per set', available: true, turnaround: '72 hrs' },
     ],
   },
   {
@@ -115,9 +115,9 @@ export const laundries: Laundry[] = [
     isAvailable: false,
     address: '22 Corniche El-Nil, Maadi',
     services: [
-      { id: 'wash-kg',    name: 'Wash & Fold',        category: 'wash',      price: 14,  unit: 'per kg',   available: true,  turnaround: '2.5 hrs'},
-      { id: 'iron-shirt', name: 'Iron – Shirt',       category: 'iron',      price: 9,   unit: 'per item', available: true,  turnaround: '1 hr'  },
-      { id: 'dry-dress',  name: 'Dry Clean – Dress',  category: 'dry_clean', price: 50,  unit: 'per item', available: true,  turnaround: '24 hrs'},
+      { id: 'wash-kg', name: 'Wash & Fold', category: 'wash', price: 14, unit: 'per kg', available: true, turnaround: '2.5 hrs' },
+      { id: 'iron-shirt', name: 'Iron – Shirt', category: 'iron', price: 9, unit: 'per item', available: true, turnaround: '1 hr' },
+      { id: 'dry-dress', name: 'Dry Clean – Dress', category: 'dry_clean', price: 50, unit: 'per item', available: true, turnaround: '24 hrs' },
     ],
   },
   {
@@ -142,5 +142,7 @@ export const categoryLabels: Record<string, string> = {
   dry_clean: 'Dry Cleaning',
   specialty: 'Specialty Items',
 };
+
+
 
 export const categoryOrder = ['wash', 'iron', 'dry_clean', 'specialty'];
