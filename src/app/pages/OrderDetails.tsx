@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Package, Clock, MapPin, Phone, MessageCircle, Share2 } from 'lucide-react';
 import { BottomNav } from '../components/BottomNav';
@@ -19,7 +19,7 @@ interface Order {
 
 export default function OrderDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function OrderDetails() {
       {/* Header */}
       <div className="bg-gradient-to-br from-[#1D6076] to-[#2a7a94] text-white px-4 md:px-8 lg:px-12 py-6 md:py-8">
         <div className="max-w-7xl mx-auto flex items-center gap-3 mb-4">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-white/10 rounded-lg transition-colors">
+          <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-white/10 rounded-lg transition-colors">
             <ArrowLeft size={24} className="md:w-7 md:h-7" />
           </button>
           <div>

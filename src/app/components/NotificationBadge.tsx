@@ -1,5 +1,5 @@
 import { Bell } from 'lucide-react';
-import { Link } from 'react-router';
+import Link from 'next/link';
 
 interface NotificationBadgeProps {
   count?: number;
@@ -7,7 +7,7 @@ interface NotificationBadgeProps {
 
 export function NotificationBadge({ count = 0 }: NotificationBadgeProps) {
   return (
-    <Link to="/notifications" className="relative p-2">
+    <Link href="/notifications" className="relative p-2">
       <div className="relative">
         <Bell size={24} className="text-white" strokeWidth={2.5} />
         {count > 0 && (

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, CreditCard, Lock, Check, XCircle, Loader2,
   ShieldCheck, AlertCircle, ChevronRight, Receipt
@@ -62,7 +63,7 @@ function SuccessScreen({ order, onDone }: { order: Order; onDone: () => void }) 
       >
         Track My Order
       </button>
-      <Link to="/" className="text-sm text-gray-500 hover:text-gray-700">Back to Home</Link>
+      <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">Back to Home</Link>
     </div>
   );
 }
@@ -83,14 +84,14 @@ function FailedScreen({ onRetry }: { onRetry: () => void }) {
       >
         Try Again
       </button>
-      <Link to="/" className="text-sm text-gray-500 hover:text-gray-700">Cancel</Link>
+      <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">Cancel</Link>
     </div>
   );
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function Payment() {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const [flowState, setFlowState] = useState<FlowState>('form');
   const [order, setOrder]         = useState<Order | null>(null);
@@ -150,7 +151,7 @@ export default function Payment() {
   };
 
   const handleDone = () => {
-    if (order) navigate(`/track-order/${order.id}`);
+    if (order) router.push(`/track-order/${order.id}`);
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -161,7 +162,7 @@ export default function Payment() {
         <div className="bg-white px-4 md:px-8 py-4 border-b border-gray-100 sticky top-16 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto flex items-center gap-3">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => router.back()}
               className="p-2 -ml-1 rounded-xl hover:bg-gray-50 active:scale-95 transition-all"
               disabled={flowState === 'processing'}
             >
@@ -184,7 +185,7 @@ export default function Payment() {
           <AlertCircle size={36} className="text-red-400 mb-4" strokeWidth={1.5} />
           <p className="text-gray-700 mb-1">Invalid payment request</p>
           <p className="text-gray-400 text-sm mb-6">No order data found. Please start a new order.</p>
-          <Link to="/nearby" className="text-[#1D6076] text-sm underline">Browse Laundries</Link>
+          <Link href="/nearby" className="text-[#1D6076] text-sm underline">Browse Laundries</Link>
         </div>
       )}
 
@@ -195,7 +196,7 @@ export default function Payment() {
             <Loader2 size={36} className="text-[#1D6076] animate-spin" strokeWidth={1.5} />
           </div>
           <h2 className="text-xl text-gray-900 mb-2">Processing Payment…</h2>
-          <p className="text-gray-400 text-sm">Please don't close this page</p>
+          <p className="text-gray-400 text-sm">Please don&apos;t close this page</p>
         </div>
       )}
 

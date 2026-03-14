@@ -6,9 +6,13 @@ import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { laundries } from '../data/laundries';
 import { useAuth } from '../context/AuthContext';
 
-const HERO_IMG       = 'https://images.unsplash.com/photo-1596433904747-e8b061219a71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1400';
-const DELIVERY_IMG   = 'https://images.unsplash.com/photo-1576192350050-d9e08ee1f122?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800';
-const WASHING_IMG    = 'https://images.unsplash.com/photo-1631323272727-6418cf55f287?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800';
+import heroImg from '../../assets/c3cadfc0d53d76910fffbccca80883d33cdb8d15.png';
+import deliveryImg from '../../assets/5c123ba856ecc04491c6ccc9c72966bfe212fa77.png';
+import washingImg from '../../assets/a5c265bc76cb072b3af3ba58bef015e55b047416.png';
+
+const HERO_IMG       = heroImg;
+const DELIVERY_IMG   = deliveryImg;
+const WASHING_IMG    = washingImg;
 
 const steps = [
   { n: '01', title: 'Find a Laundry',    desc: 'Browse verified laundries near your location, compare prices and ratings.',              icon: MapPin,      color: '#1D6076', bg: '#EFF8FB' },
@@ -40,7 +44,7 @@ function Section({ children, className = '', style }: { children: React.ReactNod
       style={style}
       initial={{ opacity: 0, y: 48 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] as const }}
     >
       {children}
     </motion.section>
@@ -54,7 +58,7 @@ const listVariants = {
 };
 const itemVariants = {
   hidden: { opacity: 0, y: 32, scale: 0.97 },
-  show:   { opacity: 1, y: 0,  scale: 1, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
+  show:   { opacity: 1, y: 0,  scale: 1, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] as const } },
 };
 
 // ── Count-up stat ────────────────────────────────────────────────────────────
@@ -115,7 +119,7 @@ export default function Home() {
               <motion.div
                 initial={{ opacity: 0, y: -16, scale: 0.92 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }}
                 className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 mb-6"
               >
                 <span className="text-amber-300 text-sm">👋</span>
@@ -126,7 +130,7 @@ export default function Home() {
             <motion.h1
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const, delay: 0.1 }}
               className="text-4xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight"
               style={{ fontWeight: 800, letterSpacing: '-0.02em' }}
             >
@@ -145,7 +149,7 @@ export default function Home() {
             <motion.p
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay: 0.3 }}
               className="text-white/75 text-lg md:text-xl mb-8 leading-relaxed max-w-lg"
             >
               Ndeef connects you with the best local laundries. Browse, order, track — clean clothes at your door.
@@ -154,7 +158,7 @@ export default function Home() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.45 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay: 0.45 }}
               className="flex flex-wrap gap-3 mb-10"
             >
               <Link
@@ -197,7 +201,7 @@ export default function Home() {
               className="relative w-80"
               initial={{ opacity: 0, x: 60, rotateY: 8 }}
               animate={{ opacity: 1, x: 0, rotateY: 0 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const, delay: 0.25 }}
               style={{ perspective: 800 }}
             >
               {/* Main card */}
@@ -356,7 +360,7 @@ export default function Home() {
           >
             {nearbyPreview.map(l => (
               <motion.div key={l.id} variants={itemVariants}>
-                <Link to={`/laundry/${l.id}`} className="group block">
+                <Link href={`/laundry/${l.id}`} className="group block">
                   <motion.div
                     className="bg-white rounded-3xl overflow-hidden shadow-lg"
                     whileHover={{ y: -8, boxShadow: '0 30px 60px rgba(0,0,0,0.20)' }}
@@ -415,7 +419,7 @@ export default function Home() {
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] as const }}
             >
               <span className="inline-block bg-[#EBA050]/15 text-[#EBA050] text-xs font-semibold tracking-widest px-4 py-1.5 rounded-full mb-4 uppercase">
                 Why Ndeef
@@ -432,7 +436,7 @@ export default function Home() {
               initial={{ opacity: 0, x: 40, scale: 0.95 }}
               whileInView={{ opacity: 1, x: 0, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] as const, delay: 0.1 }}
               whileHover={{ scale: 1.02 }}
             >
               <ImageWithFallback src={DELIVERY_IMG} alt="Delivery service" className="w-full h-full object-cover" />
@@ -524,7 +528,7 @@ export default function Home() {
                     </motion.span>
                   ))}
                 </div>
-                <p className="text-gray-700 text-sm leading-relaxed mb-5 italic">"{text}"</p>
+                <p className="text-gray-700 text-sm leading-relaxed mb-5 italic">&quot;{text}&quot;</p>
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1D6076] to-[#2a7a94] flex items-center justify-center">
                     <span className="text-white text-xs font-semibold">{name[0]}</span>

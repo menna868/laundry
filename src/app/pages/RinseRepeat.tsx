@@ -1,10 +1,11 @@
-import { Link, useNavigate } from 'react-router';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Truck, Zap, DollarSign, Package, CreditCard, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 
 export default function RinseRepeat() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [selectedBags, setSelectedBags] = useState<1 | 2 | 4>(2);
 
   const bagOptions = [
@@ -17,14 +18,14 @@ export default function RinseRepeat() {
     <div className="min-h-screen bg-white" dir="ltr">
       {/* Header */}
       <div className="sticky top-0 bg-white px-4 md:px-8 lg:px-12 py-4 z-10">
-        <button onClick={() => navigate(-1)} className="inline-block hover:opacity-70 transition-opacity">
+        <button onClick={() => router.back()} className="inline-block hover:opacity-70 transition-opacity">
           <ArrowLeft size={24} className="text-gray-900" strokeWidth={2} />
         </button>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 lg:px-12 pb-8 md:pb-12">
         {/* Title */}
-        <h1 className="text-2xl md:text-3xl text-gray-900 mb-6 md:mb-8">What's Rinse Repeat?</h1>
+        <h1 className="text-2xl md:text-3xl text-gray-900 mb-6 md:mb-8">What&apos;s Rinse Repeat?</h1>
 
         {/* Image */}
         <div className="mb-5 md:mb-6 rounded-2xl overflow-hidden">
@@ -108,7 +109,7 @@ export default function RinseRepeat() {
         </div>
 
         {/* CTA Button */}
-        <Link to="/rinse-repeat/plan">
+        <Link href="/rinse-repeat/plan">
           <button className="w-full bg-[#EBA050] text-white py-4 md:py-5 rounded-xl font-medium text-base md:text-lg hover:bg-[#EBA050]/90 transition-colors shadow-lg">
             Get started with Rinse Repeat
           </button>

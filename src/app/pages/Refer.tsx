@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import Link from 'next/link';
 import { ArrowLeft, Copy, Share2 } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 
@@ -14,7 +14,7 @@ export default function Refer() {
     <div className="min-h-screen bg-white" dir="ltr">
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-gray-200 px-4 md:px-8 lg:px-12 py-4 z-10">
-        <Link to="/" className="inline-block hover:opacity-70 transition-opacity">
+        <Link href="/" className="inline-block hover:opacity-70 transition-opacity">
           <ArrowLeft size={24} className="text-gray-900" strokeWidth={2} />
         </Link>
       </div>
@@ -35,7 +35,7 @@ export default function Refer() {
         </h1>
         
         <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-8 md:mb-12">
-          Share the gift of Rinse with your friends and family. For every friend who signs up and completes their first order, you'll both get $20 in credit.
+          Share the gift of Rinse with your friends and family. For every friend who signs up and completes their first order, you&apos;ll both get $20 in credit.
         </p>
 
         {/* How it works */}

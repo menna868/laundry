@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import Link from 'next/link';
 import { ArrowLeft, Calendar, MapPin, Package, CreditCard, Check } from 'lucide-react';
 import { useState } from 'react';
 
@@ -9,7 +9,7 @@ export default function OrderDetailsNew() {
     <div className="min-h-screen bg-white" dir="ltr">
       {/* Header - Teal */}
       <div className="bg-[#1D6076] px-5 py-4">
-        <Link to="/" className="inline-block mb-4">
+        <Link href="/" className="inline-block mb-4">
           <ArrowLeft size={24} className="text-white" strokeWidth={2} />
         </Link>
         <h1 className="text-white text-base tracking-wider">DELIVERY INFO</h1>
@@ -65,7 +65,7 @@ export default function OrderDetailsNew() {
                   <p className="text-xs text-gray-500 mb-3">
                     Link a credit card to activate your account and schedule your first pickup.
                   </p>
-                  <Link to="/billing" className="bg-[#EBA050] text-white px-6 py-2 rounded-lg text-sm font-medium inline-block hover:bg-[#EBA050]/90 transition-colors">
+                  <Link href="/billing" className="bg-[#EBA050] text-white px-6 py-2 rounded-lg text-sm font-medium inline-block hover:bg-[#EBA050]/90 transition-colors">
                     Add payment method
                   </Link>
                 </div>
@@ -144,7 +144,7 @@ export default function OrderDetailsNew() {
               <div className="flex-1 pt-1">
                 <h3 className="text-gray-900 font-medium mb-1">Sign the card</h3>
                 <p className="text-sm text-gray-600 mb-2">
-                  When we bring your Rinse bags on pickup day, you'll get a card to help you communicate with your Valet.
+                  When we bring your Rinse bags on pickup day, you&apos;ll get a card to help you communicate with your Valet.
                 </p>
               </div>
             </div>
@@ -162,7 +162,7 @@ export default function OrderDetailsNew() {
               <div className="flex-1 pt-1">
                 <h3 className="text-gray-900 font-medium mb-1">Valet will text you</h3>
                 <p className="text-sm text-gray-600">
-                  On the day of pickup, at 5:30pm we'll text you with a 30-minute arrival window.
+                  On the day of pickup, at 5:30pm we&apos;ll text you with a 30-minute arrival window.
                 </p>
               </div>
             </div>
@@ -180,7 +180,7 @@ export default function OrderDetailsNew() {
               <div className="flex-1 pt-1">
                 <h3 className="text-gray-900 font-medium mb-1">Leave a bag or wait</h3>
                 <p className="text-sm text-gray-600">
-                  If you're not around, you can leave your bag in a safe place at your door. Or just hang out — your Valet is on their way!
+                  If you&apos;re not around, you can leave your bag in a safe place at your door. Or just hang out — your Valet is on their way!
                 </p>
               </div>
             </div>
@@ -217,7 +217,7 @@ export default function OrderDetailsNew() {
                   Have a large amount of clothes or linens?
                 </h3>
                 <p className="text-sm text-gray-600 mb-3">
-                  If you need 4 or more Rinse bags, you'll need to order them ahead of time. This will give us time to make more personalized bags.
+                  If you need 4 or more Rinse bags, you&apos;ll need to order them ahead of time. This will give us time to make more personalized bags.
                 </p>
                 <button className="bg-[#EBA050] text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-[#EBA050]/90 transition-colors">
                   More bags - $2

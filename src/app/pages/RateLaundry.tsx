@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Star, Check, AlertCircle, Loader2,
   MessageSquare, ThumbsUp, XCircle
@@ -68,7 +69,7 @@ function SubmittingScreen({ step }: { step: number }) {
 
 export default function RateLaundry() {
   const { id }   = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const [flowState, setFlowState] = useState<FlowState>('loading');
   const [order, setOrder]         = useState<Order | null>(null);
@@ -139,7 +140,7 @@ export default function RateLaundry() {
         <div className="bg-white px-4 md:px-8 py-4 border-b border-gray-100 sticky top-16 z-20 shadow-sm">
           <div className="max-w-2xl mx-auto flex items-center gap-3">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => router.back()}
               className="p-2 -ml-1 rounded-xl hover:bg-gray-50 active:scale-95 transition-all"
             >
               <ArrowLeft size={22} className="text-gray-800" strokeWidth={2} />
@@ -162,7 +163,7 @@ export default function RateLaundry() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-8 text-center">
           <AlertCircle size={36} className="text-red-400 mb-4" strokeWidth={1.5} />
           <p className="text-gray-700 mb-6">Order not found.</p>
-          <Link to="/orders" className="text-[#1D6076] text-sm underline">My Orders</Link>
+          <Link href="/orders" className="text-[#1D6076] text-sm underline">My Orders</Link>
         </div>
       )}
 
@@ -176,8 +177,7 @@ export default function RateLaundry() {
           <p className="text-gray-500 text-sm mb-7 max-w-xs leading-relaxed">
             You can only rate an order after it has been delivered. Your order is currently <strong>{order.status.replace(/_/g, ' ')}</strong>.
           </p>
-          <Link
-            to={`/track-order/${order.id}`}
+          <Link href={`/track-order/${order.id}`}
             className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] transition-all"
           >
             Track Order
@@ -192,7 +192,7 @@ export default function RateLaundry() {
             <Star size={36} className="text-amber-400 fill-amber-400" strokeWidth={0} />
           </div>
           <h2 className="text-xl text-gray-900 mb-3">Already Rated</h2>
-          <p className="text-gray-500 text-sm mb-3 max-w-xs">You've already submitted a rating for this order.</p>
+          <p className="text-gray-500 text-sm mb-3 max-w-xs">You&apos;ve already submitted a rating for this order.</p>
           <div className="flex gap-1 mb-6">
             {[1,2,3,4,5].map(i => (
               <Star key={i} size={22}
@@ -201,7 +201,7 @@ export default function RateLaundry() {
               />
             ))}
           </div>
-          <Link to={`/track-order/${order.id}`} className="text-[#1D6076] text-sm underline">View Order</Link>
+          <Link href={`/track-order/${order.id}`} className="text-[#1D6076] text-sm underline">View Order</Link>
         </div>
       )}
 
@@ -232,12 +232,12 @@ export default function RateLaundry() {
             {starLabels[order.rating ?? 0]} — {order.laundryName}
           </p>
           <button
-            onClick={() => navigate(`/track-order/${order.id}`)}
+            onClick={() => router.push(`/track-order/${order.id}`)}
             className="w-full max-w-xs bg-[#1D6076] text-white py-4 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] active:scale-[0.99] transition-all mb-3"
           >
             View Order
           </button>
-          <Link to="/" className="text-sm text-gray-500 hover:text-gray-700">Back to Home</Link>
+          <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">Back to Home</Link>
         </div>
       )}
 

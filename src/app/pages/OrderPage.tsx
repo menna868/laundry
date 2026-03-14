@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft, Minus, Plus, Clock, Calendar, MapPin, Check,
   AlertCircle, Loader2, Package, ChevronDown, Lock, RefreshCw
@@ -24,7 +24,7 @@ const timeSlots = [
 export default function OrderPage() {
   const { laundryId } = useParams();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const router = useRouter();
   const { isLoggedIn, user } = useAuth();
 
   const laundry = laundries.find(l => l.id === laundryId);
@@ -34,7 +34,7 @@ export default function OrderPage() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoggedIn) {
-      navigate('/login', { state: { from: `/order/${laundryId}?service=${serviceId}` }, replace: true });
+      router.push('/login', { state: { from: `/order/${laundryId}?service=${serviceId}` }, replace: true });
     }
   }, [isLoggedIn, navigate, laundryId, serviceId]);
 
@@ -59,7 +59,7 @@ export default function OrderPage() {
             <AlertCircle size={28} className="text-red-400" />
           </div>
           <p className="text-gray-700 mb-2">Service not found</p>
-          <button onClick={() => navigate(-1)} className="text-[#1D6076] text-sm underline">Go back</button>
+          <button onClick={() => router.back()} className="text-[#1D6076] text-sm underline">Go back</button>
         </div>
       </div>
     );
@@ -127,7 +127,7 @@ export default function OrderPage() {
 
     // Stash as pending
     localStorage.setItem('nadeef_pending_order', JSON.stringify(pendingOrder));
-    navigate('/payment');
+    router.push('/payment');
   };
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -137,7 +137,7 @@ export default function OrderPage() {
       <div className="sticky top-16 z-20 bg-[#1D6076] text-white px-4 md:px-8 py-4 shadow-sm">
         <div className="flex items-center gap-3 max-w-2xl mx-auto">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => router.back()}
             className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center hover:bg-white/25 active:scale-95 transition-all"
           >
             <ArrowLeft size={18} className="text-white" strokeWidth={2} />
@@ -163,7 +163,7 @@ export default function OrderPage() {
               </div>
             </div>
             <button
-              onClick={() => navigate(`/laundry/${laundryId}`)}
+              onClick={() => router.push(`/laundry/${laundryId}`)}
               className="mt-3 flex items-center gap-1.5 text-red-600 text-xs font-medium hover:underline"
             >
               <RefreshCw size={12} strokeWidth={2.5} />

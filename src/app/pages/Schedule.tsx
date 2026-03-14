@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import Link from 'next/link';
 import { ArrowLeft, Truck, Calendar as CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
 
@@ -9,7 +9,7 @@ export default function Schedule() {
     <div className="min-h-screen bg-white pb-40" dir="ltr">
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-gray-200 px-4 md:px-8 lg:px-12 py-4 z-10">
-        <Link to="/" className="inline-block hover:opacity-70 transition-opacity">
+        <Link href="/" className="inline-block hover:opacity-70 transition-opacity">
           <ArrowLeft size={24} className="text-gray-900" strokeWidth={2} />
         </Link>
       </div>
@@ -22,7 +22,7 @@ export default function Schedule() {
         <div className="mb-8 md:mb-12 max-w-3xl">
           <h2 className="text-base md:text-lg font-medium text-gray-900 mb-4">Pickup</h2>
           <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-6">
-            All pickups are between 8pm and 10pm. At 5:30pm, we'll text you a 30-minute arrival window of your Valet, who will bring your free personalized Rinse bags.
+            All pickups are between 8pm and 10pm. At 5:30pm, we&apos;ll text you a 30-minute arrival window of your Valet, who will bring your free personalized Rinse bags.
           </p>
 
           {/* Pickup Card */}
@@ -132,7 +132,7 @@ export default function Schedule() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 md:px-8 lg:px-12 py-5 md:py-6 z-20">
         <div className="max-w-7xl mx-auto">
           {/* Schedule Button */}
-          <Link to="/order-details/1">
+          <Link href="/order-details/1">
             <button className="w-full bg-[#EBA050] text-white py-4 md:py-5 rounded-xl font-medium text-base md:text-lg mb-4 hover:bg-[#EBA050]/90 transition-colors shadow-lg">
               Schedule my order
             </button>

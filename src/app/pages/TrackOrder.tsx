@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Star, AlertCircle, Loader2, MapPin,
   Clock, Package, CheckCircle2, XCircle, Truck, ShieldCheck, Sparkles, Lock
@@ -98,7 +99,7 @@ function TimelineStep({
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function TrackOrder() {
   const { id }  = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user } = useAuth();
 
   const [flowState, setFlowState] = useState<FlowState>('loading');
@@ -139,7 +140,7 @@ export default function TrackOrder() {
       <div className="bg-white px-4 md:px-8 py-4 border-b border-gray-100 sticky top-16 z-20 shadow-sm">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => router.back()}
             className="p-2 -ml-1 rounded-xl hover:bg-gray-50 active:scale-95 transition-all"
           >
             <ArrowLeft size={22} className="text-gray-800" strokeWidth={2} />
@@ -167,7 +168,7 @@ export default function TrackOrder() {
           </div>
           <h2 className="text-xl text-gray-900 mb-3">Invalid Request</h2>
           <p className="text-gray-500 text-sm mb-7 max-w-xs">The order ID is not valid. Please check the link and try again.</p>
-          <Link to="/orders" className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] transition-all">
+          <Link href="/orders" className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] transition-all">
             My Orders
           </Link>
         </div>
@@ -180,8 +181,8 @@ export default function TrackOrder() {
             <AlertCircle size={34} className="text-red-400" strokeWidth={1.5} />
           </div>
           <h2 className="text-xl text-gray-900 mb-3">Order Not Found</h2>
-          <p className="text-gray-500 text-sm mb-7 max-w-xs">We couldn't find this order. It may have been removed or the link is outdated.</p>
-          <Link to="/orders" className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] transition-all">
+          <p className="text-gray-500 text-sm mb-7 max-w-xs">We couldn&apos;t find this order. It may have been removed or the link is outdated.</p>
+          <Link href="/orders" className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] transition-all">
             My Orders
           </Link>
         </div>
@@ -194,8 +195,8 @@ export default function TrackOrder() {
             <Lock size={34} className="text-red-400" strokeWidth={1.5} />
           </div>
           <h2 className="text-xl text-gray-900 mb-3">Access Denied</h2>
-          <p className="text-gray-500 text-sm mb-7">You don't have permission to view this order. It belongs to a different account.</p>
-          <Link to="/orders" className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] transition-all">
+          <p className="text-gray-500 text-sm mb-7">You don&apos;t have permission to view this order. It belongs to a different account.</p>
+          <Link href="/orders" className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] transition-all">
             My Orders
           </Link>
         </div>
@@ -309,7 +310,7 @@ export default function TrackOrder() {
 
           {/* Rate button */}
           {order.status === 'delivered' && order.rating === null && (
-            <Link to={`/rate-order/${order.id}`} className="block">
+            <Link href={`/rate-order/${order.id}`} className="block">
               <div className="bg-gradient-to-r from-[#EBA050] to-[#d4832a] rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md active:scale-[0.99] transition-all">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
@@ -342,7 +343,7 @@ export default function TrackOrder() {
                 ))}
                 <span className="text-sm text-gray-700 font-medium ml-1">{order.rating}/5</span>
               </div>
-              {order.review && <p className="text-sm text-gray-600 italic">"{order.review}"</p>}
+              {order.review && <p className="text-sm text-gray-600 italic">&quot;{order.review}&quot;</p>}
             </div>
           )}
         </div>

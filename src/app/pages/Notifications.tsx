@@ -1,5 +1,5 @@
 import { Bell, Package, CheckCircle, Truck, MessageSquare } from 'lucide-react';
-import { Link } from 'react-router';
+import Link from 'next/link';
 import { TopBar } from '../components/TopBar';
 import { BottomNav } from '../components/BottomNav';
 
@@ -102,8 +102,7 @@ export default function Notifications() {
                 !notification.read ? 'border-[#1D6076]/30' : 'border-gray-100'
               }`}
             >
-              <Link
-                to={notification.orderId ? `/orders` : '#'}
+              <Link href={notification.orderId ? `/orders` : '#'}
                 className="flex items-start gap-3.5 p-4 hover:bg-gray-50 transition-colors"
               >
                 <div className={`w-11 h-11 rounded-xl ${color.bg} ${color.text} flex items-center justify-center shrink-0`}>

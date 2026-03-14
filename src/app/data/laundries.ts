@@ -1,3 +1,4 @@
+import { StaticImageData } from 'next/image';
 export interface ServiceItem {
   id: string;
   name: string;
@@ -11,7 +12,7 @@ export interface ServiceItem {
 export interface Laundry {
   id: string;
   name: string;
-  image: string;
+  image: string | StaticImageData;
   rating: number;
   reviews: number;
   deliveryTime: string;
@@ -19,17 +20,23 @@ export interface Laundry {
   distanceLabel: string;
   status: 'active' | 'inactive';
   isAvailable: boolean;
+  category?: string;
   featured?: boolean;
   discount?: string;
   address: string;
   services: ServiceItem[];
 }
+import l1Img from '../../assets/58b151bb9307cca21700c7d57fa6f7b844e0995c.png';
+import l2Img from '../../assets/5c123ba856ecc04491c6ccc9c72966bfe212fa77.png';
+import l3Img from '../../assets/ef8edca0fb59017ab6c288dae29be2b489893829.png';
+import l4Img from '../../assets/5f2f04ac02729c31fd1d3d807e15f16a15fff872.png';
+import l5Img from '../../assets/63cb0e9ca701369a32ede4db72c20c3b4a49e93f.png';
 
 export const laundries: Laundry[] = [
   {
     id: '1',
     name: 'Smart Clean Laundry',
-    image: 'https://images.unsplash.com/photo-1695679958326-918405eacb70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsYXVuZHJ5JTIwc2VydmljZSUyMHNob3B8ZW58MXx8fHwxNzcyOTM3MDk5fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: l1Img,
     rating: 4.8,
     reviews: 250,
     deliveryTime: '2 hours',
@@ -53,7 +60,7 @@ export const laundries: Laundry[] = [
   {
     id: '2',
     name: 'Comfort Laundry',
-    image: 'https://images.unsplash.com/photo-1761079976271-3a78f547ca67?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3YXNoaW5nJTIwbWFjaGluZSUyMG1vZGVybnxlbnwxfHx8fDE3NzI4NzE2MTJ8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: l2Img,
     rating: 4.6,
     reviews: 180,
     deliveryTime: '3 hours',
@@ -73,7 +80,7 @@ export const laundries: Laundry[] = [
   {
     id: '3',
     name: 'Express Clean',
-    image: 'https://images.unsplash.com/photo-1764120656278-994739787d38?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjbGVhbiUyMGZvbGRlZCUyMGNsb3RoZXN8ZW58MXx8fHwxNzcyOTM3MTAwfDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: l3Img,
     rating: 4.9,
     reviews: 320,
     deliveryTime: '1.5 hours',
@@ -98,7 +105,7 @@ export const laundries: Laundry[] = [
   {
     id: '4',
     name: 'Elegance Laundry',
-    image: 'https://images.unsplash.com/photo-1758720793993-0d191e578741?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkcnklMjBjbGVhbmluZyUyMHNlcnZpY2V8ZW58MXx8fHwxNzcyODg5NTUwfDA&ixlib=rb-4.1.0&q=80&w=1080',
+    image: l4Img,
     rating: 4.7,
     reviews: 200,
     deliveryTime: '2.5 hours',
@@ -116,7 +123,7 @@ export const laundries: Laundry[] = [
   {
     id: '5',
     name: 'Fresh & Clean',
-    image: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    image: l5Img,
     rating: 4.3,
     reviews: 95,
     deliveryTime: '4 hours',

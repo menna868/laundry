@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router';
+import Link from 'next/link';
 import { Package, Star, ChevronRight, Clock, MapPin } from 'lucide-react';
 import { Order, getOrders, statusConfig, statusOrder } from '../data/sampleOrders';
 
@@ -16,7 +16,7 @@ function OrderCard({ order }: { order: Order }) {
   const isDelivered = order.status === 'delivered';
 
   return (
-    <Link to={`/track-order/${order.id}`} className="block">
+    <Link href={`/track-order/${order.id}`} className="block">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md active:scale-[0.99] transition-all">
         {/* Top */}
         <div className="px-5 py-4 border-b border-gray-50">
@@ -145,7 +145,7 @@ export default function Orders() {
             </div>
             <p className="text-gray-500 text-base mb-1">No {activeTab} orders</p>
             {activeTab === 'active' && (
-              <Link to="/nearby" className="text-[#1D6076] text-sm mt-2 underline">Find Nearby Laundries</Link>
+              <Link href="/nearby" className="text-[#1D6076] text-sm mt-2 underline">Find Nearby Laundries</Link>
             )}
           </div>
         ) : (

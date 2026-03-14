@@ -1,8 +1,10 @@
 import { Home, ShoppingBag, User } from 'lucide-react';
-import { Link, useLocation } from 'react-router';
+import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 export function BottomNav() {
-  const location = useLocation();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
@@ -18,9 +20,8 @@ export function BottomNav() {
           const isActive = location.pathname === item.path;
           
           return (
-            <Link
-              key={item.path}
-              to={item.path}
+            <Link key={item.path}
+              href={item.path}
               className="flex flex-col items-center justify-center gap-1 flex-1 h-full relative transition-all duration-200"
             >
               {isActive && (

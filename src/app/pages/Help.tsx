@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import Link from 'next/link';
 import { ArrowLeft, MessageCircle, Mail, Phone, ChevronRight } from 'lucide-react';
 
 const faqItems = [
@@ -24,7 +24,7 @@ export default function Help() {
   return (
     <div className="min-h-screen bg-white" dir="ltr">
       <div className="sticky top-0 bg-white border-b border-gray-200 px-4 md:px-8 lg:px-12 py-4 z-10">
-        <Link to="/" className="inline-block hover:opacity-70 transition-opacity">
+        <Link href="/" className="inline-block hover:opacity-70 transition-opacity">
           <ArrowLeft size={24} className="text-gray-900" strokeWidth={2} />
         </Link>
       </div>
