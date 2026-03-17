@@ -23,7 +23,7 @@ const timeSlots = [
 // ── Component ────────────────────────────────────────────────────────────────
 export default function OrderPage() {
   const { laundryId } = useParams();
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { isLoggedIn, user } = useAuth();
 
@@ -34,22 +34,22 @@ export default function OrderPage() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoggedIn) {
-      router.push('/login', { state: { from: `/order/${laundryId}?service=${serviceId}` }, replace: true });
+      router.replace(`/login?from=${encodeURIComponent(`/order/${laundryId}?service=${serviceId}`)}`);
     }
-  }, [isLoggedIn, navigate, laundryId, serviceId]);
+  }, [isLoggedIn, router, laundryId, serviceId]);
 
   // ── Form state ─────────────────────────────────────────────────────────────
-  const [itemCount, setItemCount]           = useState(1);
-  const [selectedDate, setSelectedDate]     = useState('Today');
-  const [selectedTime, setSelectedTime]     = useState('10:00 – 12:00');
-  const [pickupAddress, setPickupAddress]   = useState('');
+  const [itemCount, setItemCount] = useState(1);
+  const [selectedDate, setSelectedDate] = useState('Today');
+  const [selectedTime, setSelectedTime] = useState('10:00 – 12:00');
+  const [pickupAddress, setPickupAddress] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [sameAddress, setSameAddress]       = useState(true);
+  const [sameAddress, setSameAddress] = useState(true);
 
   // ── UI state ───────────────────────────────────────────────────────────────
-  const [validating, setValidating]         = useState(false);
-  const [errors, setErrors]                 = useState<Record<string, string>>({});
-  const [serviceError, setServiceError]     = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [serviceError, setServiceError] = useState(false);
 
   if (!laundry || !service) {
     return (
@@ -66,14 +66,14 @@ export default function OrderPage() {
   }
 
   const deliveryFee = 10;
-  const subtotal    = service.price * itemCount;
-  const total       = subtotal + deliveryFee;
+  const subtotal = service.price * itemCount;
+  const total = subtotal + deliveryFee;
   const finalDelivery = sameAddress ? pickupAddress : deliveryAddress;
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!pickupAddress.trim())   e.pickup   = 'Pickup address is required';
+    if (!pickupAddress.trim()) e.pickup = 'Pickup address is required';
     if (!sameAddress && !deliveryAddress.trim()) e.delivery = 'Delivery address is required';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -100,29 +100,29 @@ export default function OrderPage() {
 
     // Build pending order, navigate to payment
     const pendingOrder: Order = {
-      id:              Date.now().toString(),
-      userId:          user?.id,
-      laundryId:       laundry.id,
-      laundryName:     laundry.name,
-      laundryImage:    laundry.image,
-      serviceId:       service.id,
-      serviceName:     service.name,
-      servicePrice:    service.price,
-      serviceUnit:     service.unit,
+      id: Date.now().toString(),
+      userId: user?.id,
+      laundryId: laundry.id,
+      laundryName: laundry.name,
+      laundryImage: laundry.image,
+      serviceId: service.id,
+      serviceName: service.name,
+      servicePrice: service.price,
+      serviceUnit: service.unit,
       itemCount,
-      pickupDate:      selectedDate,
-      pickupTime:      selectedTime,
-      pickupAddress:   pickupAddress.trim(),
+      pickupDate: selectedDate,
+      pickupTime: selectedTime,
+      pickupAddress: pickupAddress.trim(),
       deliveryAddress: finalDelivery.trim(),
       subtotal,
       deliveryFee,
       total,
-      status:          'pending_confirmation',
-      paymentStatus:   'pending',
-      rating:          null,
-      review:          null,
-      createdAt:       new Date().toISOString(),
-      updatedAt:       new Date().toISOString(),
+      status: 'pending_confirmation',
+      paymentStatus: 'pending',
+      rating: null,
+      review: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     // Stash as pending
@@ -242,11 +242,10 @@ export default function OrderPage() {
               <button
                 key={d}
                 onClick={() => setSelectedDate(d)}
-                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all active:scale-[0.98] ${
-                  selectedDate === d
+                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all active:scale-[0.98] ${selectedDate === d
                     ? 'bg-[#1D6076] text-white shadow-sm'
                     : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-100'
-                }`}
+                  }`}
               >
                 {d}
               </button>
@@ -265,11 +264,10 @@ export default function OrderPage() {
               <button
                 key={t}
                 onClick={() => setSelectedTime(t)}
-                className={`py-3 rounded-xl text-sm font-medium transition-all active:scale-[0.98] relative ${
-                  selectedTime === t
+                className={`py-3 rounded-xl text-sm font-medium transition-all active:scale-[0.98] relative ${selectedTime === t
                     ? 'bg-[#1D6076] text-white shadow-sm'
                     : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-100'
-                }`}
+                  }`}
               >
                 {t}
                 {selectedTime === t && (
@@ -293,11 +291,10 @@ export default function OrderPage() {
             placeholder="Enter your pickup address…"
             value={pickupAddress}
             onChange={e => { setPickupAddress(e.target.value); setErrors(p => ({ ...p, pickup: '' })); }}
-            className={`w-full bg-gray-50 border rounded-xl px-4 py-3.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all ${
-              errors.pickup
+            className={`w-full bg-gray-50 border rounded-xl px-4 py-3.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all ${errors.pickup
                 ? 'border-red-300 focus:ring-red-200 focus:border-red-400'
                 : 'border-gray-200 focus:ring-[#1D6076]/20 focus:border-[#1D6076]'
-            }`}
+              }`}
           />
           {errors.pickup && <p className="text-red-500 text-xs mt-2 flex items-center gap-1"><AlertCircle size={12} />{errors.pickup}</p>}
 
@@ -328,11 +325,10 @@ export default function OrderPage() {
               placeholder="Enter delivery address…"
               value={deliveryAddress}
               onChange={e => { setDeliveryAddress(e.target.value); setErrors(p => ({ ...p, delivery: '' })); }}
-              className={`w-full bg-gray-50 border rounded-xl px-4 py-3.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all ${
-                errors.delivery
+              className={`w-full bg-gray-50 border rounded-xl px-4 py-3.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all ${errors.delivery
                   ? 'border-red-300 focus:ring-red-200 focus:border-red-400'
                   : 'border-gray-200 focus:ring-[#1D6076]/20 focus:border-[#1D6076]'
-              }`}
+                }`}
             />
             {errors.delivery && <p className="text-red-500 text-xs mt-2 flex items-center gap-1"><AlertCircle size={12} />{errors.delivery}</p>}
           </div>
