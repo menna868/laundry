@@ -3,10 +3,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
   Star, Clock, MapPin, ArrowLeft, Sparkles, Shield, Zap, CreditCard,
-  AlertCircle, WifiOff, Package, RefreshCw, ChevronRight, Info, Lock
+  AlertCircle, WifiOff, Package, RefreshCw, ChevronRight, Info
 } from 'lucide-react';
 import { laundries, Laundry, ServiceItem, categoryLabels, categoryOrder } from '../data/laundries';
-import { useAuth } from '../context/AuthContext';
 
 // ─── Flow states ──────────────────────────────────────────────────────────────
 type FlowState =
@@ -277,7 +276,7 @@ export default function LaundryDetails() {
         <div className="pb-10">
           {/* Hero image */}
           <div className="relative h-56">
-            <img src={laundry.image} alt={laundry.name} className="w-full h-full object-cover" />
+            <img src={typeof laundry.image === 'string' ? laundry.image : laundry.image.src} alt={laundry.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
             {laundry.discount && (
               <div className="absolute top-4 right-4 bg-[#EBA050] text-white text-sm px-4 py-1.5 rounded-xl font-medium shadow">

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'motion/react';
 import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -31,11 +31,10 @@ function AppleIcon() {
 
 export default function Login() {
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { login, socialLogin } = useAuth();
 
-  const from = ({} as any)?.from || '/';
+  const from = searchParams.get('from') || '/';
 
   const [email,      setEmail]      = useState('');
   const [password,   setPassword]   = useState('');
@@ -61,7 +60,7 @@ export default function Login() {
     setLoading(true);
     const ok = await login(email, password);
     setLoading(false);
-    if (ok) router.push(from, { replace: true });
+    if (ok) router.replace(from);
     else setError('Invalid email or password. Please try again.');
   };
 
@@ -70,7 +69,7 @@ export default function Login() {
     setSocialLoad(provider);
     const ok = await socialLogin(provider);
     setSocialLoad('');
-    if (ok) router.push(from, { replace: true });
+    if (ok) router.replace(from);
   };
 
   return (
