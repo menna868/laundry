@@ -1,9 +1,9 @@
-import { useNavigate } from 'react-router';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { useState } from 'react';
 
 export default function RinseRepeatPlan() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [selectedBags, setSelectedBags] = useState<1 | 2 | 4>(2);
 
   const bagOptions = [
@@ -37,7 +37,7 @@ export default function RinseRepeatPlan() {
     <div className="min-h-screen bg-white" dir="ltr">
       {/* Header */}
       <div className="sticky top-0 bg-white px-4 md:px-8 lg:px-12 py-4 z-10">
-        <button onClick={() => navigate(-1)} className="inline-block hover:opacity-70 transition-opacity">
+        <button onClick={() => router.back()} className="inline-block hover:opacity-70 transition-opacity">
           <ArrowLeft size={24} className="text-gray-900" strokeWidth={2} />
         </button>
       </div>

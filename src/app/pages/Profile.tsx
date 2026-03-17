@@ -1,9 +1,10 @@
-import { Link, useNavigate } from 'react-router';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Profile() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: 'Basel',
     lastName: 'Ahmed',
@@ -19,7 +20,7 @@ export default function Profile() {
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-gray-200 px-4 md:px-8 lg:px-12 py-4 z-10">
         <div className="flex items-center justify-between max-w-3xl mx-auto">
-          <button onClick={() => navigate(-1)} className="hover:opacity-70 transition-opacity">
+          <button onClick={() => router.back()} className="hover:opacity-70 transition-opacity">
             <ArrowLeft size={24} className="text-gray-900" strokeWidth={2} />
           </button>
           <h1 className="text-xs font-bold text-gray-900 tracking-wider absolute left-1/2 transform -translate-x-1/2">PROFILE</h1>

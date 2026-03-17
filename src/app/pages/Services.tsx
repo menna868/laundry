@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import Link from 'next/link';
 import { ArrowLeft, Camera, Wrench, Wind, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
@@ -56,7 +56,7 @@ export default function Services() {
     <div className="min-h-screen bg-white pb-32" dir="ltr">
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-gray-200 px-4 md:px-8 lg:px-12 py-4 z-10">
-        <Link to="/" className="inline-block hover:opacity-70 transition-opacity">
+        <Link href="/" className="inline-block hover:opacity-70 transition-opacity">
           <ArrowLeft size={24} className="text-gray-900" strokeWidth={2} />
         </Link>
       </div>
@@ -112,7 +112,7 @@ export default function Services() {
                 <Camera size={24} className="text-gray-900 md:w-7 md:h-7" strokeWidth={1.5} />
               </div>
               <p className="text-gray-700 text-sm md:text-base leading-relaxed pt-1.5 md:pt-2">
-                We'll email you an itemized list with a photo of each item we receive.
+                We&apos;ll email you an itemized list with a photo of each item we receive.
               </p>
             </div>
 
@@ -130,7 +130,7 @@ export default function Services() {
                 <Wind size={24} className="text-gray-900 md:w-7 md:h-7" strokeWidth={1.5} />
               </div>
               <p className="text-gray-700 text-sm md:text-base leading-relaxed pt-1.5 md:pt-2">
-                We press and hang each of your items so they're ready to wear.
+                We press and hang each of your items so they&apos;re ready to wear.
               </p>
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function Services() {
               </div>
             </div>
           </div>
-          <Link to="/schedule">
+          <Link href="/schedule">
             <button className="w-14 h-14 md:w-16 md:h-16 bg-[#EBA050] rounded-full flex items-center justify-center hover:bg-[#EBA050]/90 transition-colors shadow-lg">
               <ArrowLeft size={24} className="text-white rotate-180 md:w-7 md:h-7" strokeWidth={2} />
             </button>

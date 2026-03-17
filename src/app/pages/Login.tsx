@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router';
+import Link from 'next/link';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'motion/react';
 import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 
-const SIDE_IMG = 'https://images.unsplash.com/photo-1596433904747-e8b061219a71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800';
+import sideImg from '../../assets/c3cadfc0d53d76910fffbccca80883d33cdb8d15.png';
+
+const SIDE_IMG = sideImg;
 
 // Social icons
 function GoogleIcon() {
@@ -27,11 +30,12 @@ function AppleIcon() {
 }
 
 export default function Login() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { login, socialLogin } = useAuth();
 
-  const from = (location.state as any)?.from || '/';
+  const from = ({} as any)?.from || '/';
 
   const [email,      setEmail]      = useState('');
   const [password,   setPassword]   = useState('');
@@ -57,7 +61,7 @@ export default function Login() {
     setLoading(true);
     const ok = await login(email, password);
     setLoading(false);
-    if (ok) navigate(from, { replace: true });
+    if (ok) router.push(from, { replace: true });
     else setError('Invalid email or password. Please try again.');
   };
 
@@ -66,7 +70,7 @@ export default function Login() {
     setSocialLoad(provider);
     const ok = await socialLogin(provider);
     setSocialLoad('');
-    if (ok) navigate(from, { replace: true });
+    if (ok) router.push(from, { replace: true });
   };
 
   return (
@@ -81,7 +85,7 @@ export default function Login() {
       >
         <div className="max-w-md w-full mx-auto">
           {/* Back */}
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-400 hover:text-gray-600 text-sm mb-8 transition-colors group">
+          <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-400 hover:text-gray-600 text-sm mb-8 transition-colors group">
             <ArrowLeft size={16} strokeWidth={2} className="group-hover:-translate-x-0.5 transition-transform" />
             Back
           </button>
@@ -96,7 +100,7 @@ export default function Login() {
             </h1>
             <p className="text-gray-500 text-sm mb-8">
               Sign in to your Ndeef account.{' '}
-              <Link to="/signup" className="text-[#1D6076] font-medium hover:underline">Create account</Link>
+              <Link href="/signup" className="text-[#1D6076] font-medium hover:underline">Create account</Link>
             </p>
           </motion.div>
 

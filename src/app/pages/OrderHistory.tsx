@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import Link from 'next/link';
 import { ArrowLeft, Calendar } from 'lucide-react';
 
 const orders = [
@@ -32,7 +32,7 @@ export default function OrderHistory() {
   return (
     <div className="min-h-screen bg-white" dir="ltr">
       <div className="sticky top-0 bg-white border-b border-gray-200 px-4 md:px-8 lg:px-12 py-4 z-10">
-        <Link to="/" className="inline-block hover:opacity-70 transition-opacity">
+        <Link href="/" className="inline-block hover:opacity-70 transition-opacity">
           <ArrowLeft size={24} className="text-gray-900" strokeWidth={2} />
         </Link>
       </div>
@@ -42,7 +42,7 @@ export default function OrderHistory() {
 
         <div className="space-y-3 md:space-y-4">
           {orders.map((order) => (
-            <Link key={order.id} to={`/order-details/${order.id}`} className="block">
+            <Link key={order.id} href={`/order-details/${order.id}`} className="block">
               <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-5 hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 md:w-16 md:h-16 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">

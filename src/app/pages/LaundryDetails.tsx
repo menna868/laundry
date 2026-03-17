@@ -1,4 +1,5 @@
-import { useParams, Link, useNavigate } from 'react-router';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
   Star, Clock, MapPin, ArrowLeft, Sparkles, Shield, Zap, CreditCard,
@@ -99,8 +100,7 @@ function ErrorScreen({
           {action}
         </button>
       )}
-      <Link
-        to="/nearby"
+      <Link href="/nearby"
         className="mt-3 text-sm text-[#1D6076] underline underline-offset-2"
       >
         Back to Nearby Laundries
@@ -120,8 +120,7 @@ function ServiceRow({ service, laundryId }: { service: ServiceItem; laundryId: s
   const color = categoryColors[service.category] ?? '#1D6076';
 
   return (
-    <Link
-      to={`/order/${laundryId}?service=${service.id}`}
+    <Link href={`/order/${laundryId}?service=${service.id}`}
       className="flex items-center justify-between p-4 border border-gray-100 rounded-2xl hover:border-[#1D6076]/30 hover:shadow-sm active:scale-[0.99] transition-all duration-200 bg-white group"
     >
       <div className="flex items-center gap-3.5">
@@ -157,7 +156,7 @@ function ServiceRow({ service, laundryId }: { service: ServiceItem; laundryId: s
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function LaundryDetails() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const [flowState, setFlowState] = useState<FlowState>('loading');
   const [laundry, setLaundry] = useState<Laundry | null>(null);
@@ -225,7 +224,7 @@ export default function LaundryDetails() {
         className={`sticky top-16 z-20 bg-white border-b border-gray-100 px-4 md:px-8 py-4 flex items-center gap-3 shadow-sm`}
       >
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => router.back()}
           className="p-2 -ml-1 rounded-xl hover:bg-gray-50 active:scale-95 transition-all"
         >
           <ArrowLeft size={22} className="text-gray-800" strokeWidth={2} />
@@ -270,7 +269,7 @@ export default function LaundryDetails() {
 
       {/* ── Errors ─────────────────────────────────────────────────────────── */}
       {flowState === 'not_found'  && <ErrorScreen type="not_found"  onRetry={runFlow} />}
-      {flowState === 'unavailable' && <ErrorScreen type="unavailable" onRetry={() => navigate('/nearby')} />}
+      {flowState === 'unavailable' && <ErrorScreen type="unavailable" onRetry={() => router.push('/nearby')} />}
       {flowState === 'no_services' && <ErrorScreen type="no_services" onRetry={runFlow} />}
 
       {/* ── Success ────────────────────────────────────────────────────────── */}

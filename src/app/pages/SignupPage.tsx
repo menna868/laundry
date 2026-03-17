@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, AlertCircle,
   User, Mail, Lock, Phone, MapPin, Check
@@ -88,7 +89,7 @@ function InputField({
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function SignupPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { signup, socialLogin } = useAuth();
 
   const [step, setStep] = useState(0); // 0 = choose method, 1 = details, 2 = contact
@@ -135,14 +136,14 @@ export default function SignupPage() {
     const data: SignupData = { firstName, lastName, email, phone, password, address };
     const ok = await signup(data);
     setLoading(false);
-    if (ok) navigate('/', { replace: true });
+    if (ok) router.push('/', { replace: true });
   };
 
   const handleSocial = async (provider: string) => {
     setSocialLoad(provider);
     const ok = await socialLogin(provider);
     setSocialLoad('');
-    if (ok) navigate('/', { replace: true });
+    if (ok) router.push('/', { replace: true });
   };
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -155,7 +156,7 @@ export default function SignupPage() {
 
           {/* Back */}
           <button
-            onClick={() => step === 0 ? navigate(-1) : setStep(s => s - 1)}
+            onClick={() => step === 0 ? router.back() : setStep(s => s - 1)}
             className="flex items-center gap-2 text-gray-400 hover:text-gray-600 text-sm mb-8 transition-colors group"
           >
             <ArrowLeft size={16} strokeWidth={2} className="group-hover:-translate-x-0.5 transition-transform" />
@@ -170,7 +171,7 @@ export default function SignupPage() {
               </h1>
               <p className="text-gray-500 text-sm mb-8">
                 Join Nadeef for free.{' '}
-                <Link to="/login" className="text-[#1D6076] font-medium hover:underline">Already have an account?</Link>
+                <Link href="/login" className="text-[#1D6076] font-medium hover:underline">Already have an account?</Link>
               </p>
 
               <div className="space-y-3 mb-6">
@@ -212,7 +213,7 @@ export default function SignupPage() {
             <>
               <StepIndicator current={0} total={2} />
               <h1 className="text-2xl text-gray-900 mb-1.5" style={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
-                Let's get started!
+                Let&apos;s get started!
               </h1>
               <p className="text-gray-500 text-sm mb-6">Fill in your basic info to create your account.</p>
 
@@ -293,7 +294,7 @@ export default function SignupPage() {
         <div className="relative z-10 flex flex-col justify-center px-14 py-16 max-w-lg">
           <div className="text-6xl mb-6">🧺</div>
           <h2 className="text-4xl text-white mb-5" style={{ fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-            Don't let laundry<br />slow you down.
+            Don&apos;t let laundry<br />slow you down.
           </h2>
           <p className="text-white/80 text-base leading-relaxed mb-8">
             Join Nadeef and discover a smarter way to manage your laundry — schedule pickups, track orders, and get fresh clothes delivered.

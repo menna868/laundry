@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import {
   MapPin, Star, Clock, ArrowLeft, Search, SlidersHorizontal,
@@ -156,8 +157,7 @@ function LaundryCard({ laundry, index }: { laundry: Laundry; index: number }) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: index * 0.07 }}
     >
-      <Link
-        to={`/laundry/${laundry.id}`}
+      <Link href={`/laundry/${laundry.id}`}
         className="block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 active:scale-[0.99] transition-all duration-200"
       >
         <motion.div
@@ -230,7 +230,7 @@ function LaundryCard({ laundry, index }: { laundry: Laundry; index: number }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function NearbyLaundries() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [flowState, setFlowState] = useState<FlowState>('permission_request');
   const [errorType, setErrorType] = useState<'location_error' | 'no_laundries' | 'permission_denied'>('location_error');
   const [laundryList, setLaundryList] = useState<Laundry[]>([]);
@@ -290,7 +290,7 @@ export default function NearbyLaundries() {
       {/* ── Header ── */}
       <div className="bg-white px-4 md:px-8 py-4 flex items-center gap-3 border-b border-gray-100 sticky top-16 z-20 shadow-sm">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => router.back()}
           className="p-2 -ml-1 rounded-xl hover:bg-gray-50 active:scale-95 transition-all"
         >
           <ArrowLeft size={22} className="text-gray-800" strokeWidth={2} />
