@@ -13,6 +13,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
+  isAuthReady: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (data: SignupData) => Promise<boolean>;
   logout: () => void;
@@ -42,12 +43,14 @@ const DEMO_USER: User = {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem('nadeef_user');
     if (raw) {
       try { setUser(JSON.parse(raw)); } catch { /* noop */ }
     }
+    setIsAuthReady(true);
   }, []);
 
   const login = async (email: string, _password: string): Promise<boolean> => {
@@ -93,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, login, signup, logout, socialLogin }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAuthReady, login, signup, logout, socialLogin }}>
       {children}
     </AuthContext.Provider>
   );

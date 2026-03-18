@@ -42,6 +42,11 @@ export function TopNav() {
     { href: '/help', label: 'Help', icon: HelpCircle },
   ];
 
+  const visibleNavLinks = isLoggedIn
+    ? navLinks
+    : navLinks.filter(link => link.href !== '/orders');
+  const authHref = (path: '/login' | '/signup') => `${path}?from=${encodeURIComponent(pathname || '/')}`;
+
   const isActive = (href: string) => pathname === href || pathname.startsWith(href);
 
   const handleLogout = () => {
@@ -59,7 +64,7 @@ export function TopNav() {
 
           {/* Desktop nav links */}
           <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map(({ href, label }) => (
+            {visibleNavLinks.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
@@ -127,13 +132,13 @@ export function TopNav() {
             ) : (
               <div className="flex items-center gap-2">
                 <Link
-                  href="/login"
+                  href={authHref('/login')}
                   className="hidden sm:block text-sm font-medium text-gray-700 hover:text-[#1D6076] px-3 py-2 rounded-xl hover:bg-gray-50 transition-all"
                 >
                   Sign In
                 </Link>
                 <Link
-                  href="/signup"
+                  href={authHref('/signup')}
                   className="bg-[#1D6076] text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-[#2a7a94] transition-all shadow-sm"
                 >
                   Get Started
@@ -179,7 +184,7 @@ export function TopNav() {
             )}
 
             <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-              {navLinks.map(({ href, label, icon: Icon }) => (
+              {visibleNavLinks.map(({ href, label, icon: Icon }) => (
                 <Link
                   key={href}
                   href={href}
@@ -225,12 +230,12 @@ export function TopNav() {
                 </button>
               ) : (
                 <>
-                  <Link href="/login" onClick={() => setMobileOpen(false)}
+                  <Link href={authHref('/login')} onClick={() => setMobileOpen(false)}
                     className="block w-full text-center py-3.5 rounded-xl border border-[#1D6076] text-[#1D6076] text-sm font-medium hover:bg-[#1D6076]/5 transition-all"
                   >
                     Sign In
                   </Link>
-                  <Link href="/signup" onClick={() => setMobileOpen(false)}
+                  <Link href={authHref('/signup')} onClick={() => setMobileOpen(false)}
                     className="block w-full text-center py-3.5 rounded-xl bg-[#1D6076] text-white text-sm font-medium hover:bg-[#2a7a94] transition-all"
                   >
                     Get Started

@@ -6,6 +6,7 @@ import {
   ShieldCheck, AlertCircle, ChevronRight, Receipt
 } from 'lucide-react';
 import { Order, saveOrder } from '../data/sampleOrders';
+import { toast } from 'sonner';
 
 // ── Flow states ───────────────────────────────────────────────────────────────
 type FlowState = 'invalid' | 'form' | 'processing' | 'success' | 'failed';
@@ -139,6 +140,7 @@ export default function Payment() {
       saveOrder(completedOrder);
       localStorage.removeItem('nadeef_pending_order');
       setOrder(completedOrder);
+      toast.success('Order placed successfully.');
       setFlowState('success');
     } else {
       setFlowState('failed');

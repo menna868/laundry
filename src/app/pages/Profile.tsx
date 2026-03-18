@@ -1,10 +1,12 @@
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
 
 export default function Profile() {
   const router = useRouter();
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const [formData, setFormData] = useState({
     firstName: 'Basel',
     lastName: 'Ahmed',
@@ -14,6 +16,11 @@ export default function Profile() {
     apt: '',
     instructions: '',
   });
+
+  const handleChangePassword = async () => {
+    await new Promise((r) => setTimeout(r, 900));
+    toast.success('Password updated successfully.');
+  };
 
   return (
     <div className="min-h-screen bg-white" dir="ltr">
@@ -115,7 +122,10 @@ export default function Profile() {
         <h2 className="text-xs font-bold text-gray-900 tracking-wider mb-5 md:mb-6">ACCOUNT HELP</h2>
 
         <div className="space-y-4 md:space-y-5">
-          <button className="text-[#EBA050] text-base md:text-lg font-medium hover:underline">
+          <button
+            onClick={() => setShowChangePassword(true)}
+            className="text-[#EBA050] text-base md:text-lg font-medium hover:underline"
+          >
             Change password
           </button>
           <br />
@@ -127,6 +137,12 @@ export default function Profile() {
         {/* Bottom Spacer */}
         <div className="h-20"></div>
       </div>
+
+      <ChangePasswordModal
+        open={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+        onSubmit={handleChangePassword}
+      />
     </div>
   );
 }
