@@ -1,22 +1,31 @@
-"use client"
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+"use client";
 
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  address?: string;
-}
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  ApiError,
+  AuthResult,
+  AuthUser,
+  googleLoginRequest,
+  loginRequest,
+  mapTokenToAuthUser,
+  mapUserDtoToAuthUser,
+  registerRequest,
+  verifyEmailRequest,
+} from "@/app/lib/api";
+
+const STORAGE_KEY = "nadeef_user";
+
+export type User = AuthUser;
 
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (data: SignupData) => Promise<boolean>;
+  isAuthReady: boolean;
+  login: (email: string, password: string) => Promise<AuthResult>;
+  signup: (data: SignupData) => Promise<AuthResult>;
+  verifyEmail: (email: string, otpCode: string) => Promise<AuthResult>;
   logout: () => void;
-  socialLogin: (provider: string) => Promise<boolean>;
+  socialLogin: (provider: string, credential?: string) => Promise<AuthResult>;
 }
 
 export interface SignupData {
@@ -30,70 +39,152 @@ export interface SignupData {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Demo user for testing
-const DEMO_USER: User = {
-  id: 'usr_001',
-  firstName: 'Basel',
-  lastName: 'Ahmed',
-  email: 'basel@nadeef.app',
-  phone: '+20 100 123 4567',
-  address: '14 Tahrir Square, Cairo',
-};
+function readStoredUser() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as User;
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
+
+function persistUser(user: User | null) {
+  if (!user) {
+    localStorage.removeItem(STORAGE_KEY);
+    return;
+  }
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+}
+
+function toAuthError(error: unknown): AuthResult {
+  if (error instanceof ApiError) {
+    return { ok: false, message: error.message };
+  }
+
+  return { ok: false, message: "Something went wrong. Please try again." };
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    const raw = localStorage.getItem('nadeef_user');
-    if (raw) {
-      try { setUser(JSON.parse(raw)); } catch { /* noop */ }
-    }
+    setUser(readStoredUser());
+    setIsAuthReady(true);
   }, []);
 
-  const login = async (email: string, _password: string): Promise<boolean> => {
-    await new Promise(r => setTimeout(r, 1100));
-    // Accept any email/password for demo; or match demo user
-    const loggedIn: User = email === DEMO_USER.email
-      ? DEMO_USER
-      : { ...DEMO_USER, email, id: `usr_${Date.now()}` };
-    setUser(loggedIn);
-    localStorage.setItem('nadeef_user', JSON.stringify(loggedIn));
-    return true;
+  const login = async (email: string, password: string): Promise<AuthResult> => {
+    try {
+      const response = await loginRequest(email, password);
+      const nextUser = mapUserDtoToAuthUser(response);
+
+      setUser(nextUser);
+      persistUser(nextUser);
+
+      return { ok: true, user: nextUser };
+    } catch (error) {
+      return toAuthError(error);
+    }
   };
 
-  const signup = async (data: SignupData): Promise<boolean> => {
-    await new Promise(r => setTimeout(r, 1200));
-    const newUser: User = {
-      id: `usr_${Date.now()}`,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-    };
-    setUser(newUser);
-    localStorage.setItem('nadeef_user', JSON.stringify(newUser));
-    return true;
+  const signup = async (data: SignupData): Promise<AuthResult> => {
+    try {
+      const response = await registerRequest({
+        name: `${data.firstName} ${data.lastName}`.trim(),
+        email: data.email,
+        password: data.password,
+        phoneNumber: data.phone,
+        role: "Customer",
+      });
+
+      if (response.token) {
+        const nextUser = mapUserDtoToAuthUser(response);
+        setUser(nextUser);
+        persistUser(nextUser);
+        return { ok: true, user: nextUser };
+      }
+
+      return {
+        ok: true,
+        requiresVerification: true,
+        email: response.email,
+        message: "We sent a verification code to your email.",
+      };
+    } catch (error) {
+      return toAuthError(error);
+    }
   };
 
-  const socialLogin = async (provider: string): Promise<boolean> => {
-    await new Promise(r => setTimeout(r, 900));
-    const socialUser: User = {
-      ...DEMO_USER,
-      id: `usr_${provider}_${Date.now()}`,
-    };
-    setUser(socialUser);
-    localStorage.setItem('nadeef_user', JSON.stringify(socialUser));
-    return true;
+  const verifyEmail = async (
+    email: string,
+    otpCode: string,
+  ): Promise<AuthResult> => {
+    try {
+      const response = await verifyEmailRequest(email, otpCode);
+      const nextUser = mapTokenToAuthUser(response.token, { email });
+
+      setUser(nextUser);
+      persistUser(nextUser);
+
+      return { ok: true, user: nextUser };
+    } catch (error) {
+      return toAuthError(error);
+    }
+  };
+
+  const socialLogin = async (
+    provider: string,
+    credential?: string,
+  ): Promise<AuthResult> => {
+    if (provider !== "google") {
+      return {
+        ok: false,
+        message: `${provider} sign-in is not supported in this frontend.`,
+      };
+    }
+
+    if (!credential) {
+      return {
+        ok: false,
+        message: "Google sign-in did not return a valid credential.",
+      };
+    }
+
+    try {
+      const response = await googleLoginRequest(credential);
+      const nextUser = mapUserDtoToAuthUser(response);
+
+      setUser(nextUser);
+      persistUser(nextUser);
+
+      return { ok: true, user: nextUser };
+    } catch (error) {
+      return toAuthError(error);
+    }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('nadeef_user');
+    persistUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, login, signup, logout, socialLogin }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoggedIn: !!user?.token,
+        isAuthReady,
+        login,
+        signup,
+        verifyEmail,
+        logout,
+        socialLogin,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -101,6 +192,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
 }

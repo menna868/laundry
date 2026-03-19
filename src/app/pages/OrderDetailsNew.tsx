@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, Calendar, MapPin, Package, CreditCard, Check } from 'lucide-react';
+import { ArrowLeft, Calendar } from 'lucide-react';
 import { useState } from 'react';
 
 export default function OrderDetailsNew() {

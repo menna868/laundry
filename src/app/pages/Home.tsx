@@ -1,18 +1,16 @@
-import { useRef } from 'react';
-import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+import Link from "next/link"
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, useInView } from 'motion/react';
 import { ArrowRight, MapPin, Star, ShieldCheck, Zap, Clock, ChevronRight, Sparkles, CheckCircle } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { laundries } from '../data/laundries';
+import { getLaundriesRequest, mapLaundryDtoToUiLaundry, UiLaundry } from '@/app/lib/api';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 
-import heroImg from '../../assets/c3cadfc0d53d76910fffbccca80883d33cdb8d15.png';
-import deliveryImg from '../../assets/5c123ba856ecc04491c6ccc9c72966bfe212fa77.png';
-import washingImg from '../../assets/a5c265bc76cb072b3af3ba58bef015e55b047416.png';
-
-const HERO_IMG       = heroImg;
-const DELIVERY_IMG   = deliveryImg;
-const WASHING_IMG    = washingImg;
+const HERO_IMG       = 'https://images.unsplash.com/photo-1596433904747-e8b061219a71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1400';
+const DELIVERY_IMG   = 'https://images.unsplash.com/photo-1576192350050-d9e08ee1f122?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800';
+const WASHING_IMG    = 'https://images.unsplash.com/photo-1631323272727-6418cf55f287?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800';
 
 const steps = [
   { n: '01', title: 'Find a Laundry',    desc: 'Browse verified laundries near your location, compare prices and ratings.',              icon: MapPin,      color: '#1D6076', bg: '#EFF8FB' },
@@ -44,7 +42,7 @@ function Section({ children, className = '', style }: { children: React.ReactNod
       style={style}
       initial={{ opacity: 0, y: 48 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] as const }}
+      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.section>
@@ -55,11 +53,11 @@ function Section({ children, className = '', style }: { children: React.ReactNod
 const listVariants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
-};
+} as const;
 const itemVariants = {
   hidden: { opacity: 0, y: 32, scale: 0.97 },
   show:   { opacity: 1, y: 0,  scale: 1, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] as const } },
-};
+} as const;
 
 // ── Count-up stat ────────────────────────────────────────────────────────────
 function StatItem({ v, l }: { v: string; l: string }) {
@@ -80,11 +78,29 @@ function StatItem({ v, l }: { v: string; l: string }) {
 
 export default function Home() {
   const { isLoggedIn, user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [nearbyPreview, setNearbyPreview] = useState<UiLaundry[]>([]);
 
-  const nearbyPreview = laundries
-    .filter(l => l.status === 'active')
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, 3);
+  useEffect(() => {
+    if (searchParams.get('orderPlaced') !== '1') return;
+
+    toast.success('Order placed successfully.');
+    router.replace('/');
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    const loadPreview = async () => {
+      try {
+        const response = await getLaundriesRequest({ pageIndex: 1, pageSize: 3 });
+        setNearbyPreview(response.data.map((entry) => mapLaundryDtoToUiLaundry(entry)));
+      } catch {
+        setNearbyPreview([]);
+      }
+    };
+
+    loadPreview();
+  }, []);
 
   return (
     <div className="min-h-screen" dir="ltr">
@@ -119,7 +135,7 @@ export default function Home() {
               <motion.div
                 initial={{ opacity: 0, y: -16, scale: 0.92 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 mb-6"
               >
                 <span className="text-amber-300 text-sm">👋</span>
@@ -130,7 +146,7 @@ export default function Home() {
             <motion.h1
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const, delay: 0.1 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
               className="text-4xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight"
               style={{ fontWeight: 800, letterSpacing: '-0.02em' }}
             >
@@ -149,7 +165,7 @@ export default function Home() {
             <motion.p
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay: 0.3 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
               className="text-white/75 text-lg md:text-xl mb-8 leading-relaxed max-w-lg"
             >
               Ndeef connects you with the best local laundries. Browse, order, track — clean clothes at your door.
@@ -158,11 +174,11 @@ export default function Home() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay: 0.45 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.45 }}
               className="flex flex-wrap gap-3 mb-10"
             >
               <Link
-                href="/nearby"
+                 href="/nearby"
                 className="flex items-center gap-2 px-7 py-4 rounded-2xl text-sm font-semibold text-white shadow-lg shadow-[#EBA050]/25 hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all"
                 style={{ background: 'linear-gradient(135deg, #EBA050 0%, #d4832a 100%)' }}
               >
@@ -171,7 +187,7 @@ export default function Home() {
               </Link>
               {!isLoggedIn && (
                 <Link
-                  href="/signup"
+                   href="/signup"
                   className="flex items-center gap-2 px-7 py-4 rounded-2xl text-sm font-semibold text-white border border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 active:scale-[0.98] transition-all"
                 >
                   Get Started Free
@@ -201,7 +217,7 @@ export default function Home() {
               className="relative w-80"
               initial={{ opacity: 0, x: 60, rotateY: 8 }}
               animate={{ opacity: 1, x: 0, rotateY: 0 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const, delay: 0.25 }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
               style={{ perspective: 800 }}
             >
               {/* Main card */}
@@ -230,7 +246,7 @@ export default function Home() {
                   ))}
                 </div>
                 <Link
-                  href="/nearby"
+                   href="/nearby"
                   className="mt-4 flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl text-sm font-semibold text-white transition-all"
                   style={{ background: 'linear-gradient(135deg, #1D6076 0%, #2a7a94 100%)' }}
                 >
@@ -346,7 +362,7 @@ export default function Home() {
                 Top Laundries
               </motion.h2>
             </div>
-            <Link href="/nearby" className="flex items-center gap-1.5 text-[#EBA050] text-sm font-semibold hover:gap-2.5 transition-all">
+            <Link  href="/nearby" className="flex items-center gap-1.5 text-[#EBA050] text-sm font-semibold hover:gap-2.5 transition-all">
               See All <ChevronRight size={16} strokeWidth={2.5} />
             </Link>
           </div>
@@ -358,9 +374,9 @@ export default function Home() {
             whileInView="show"
             viewport={{ once: true, margin: '-60px' }}
           >
-            {nearbyPreview.map(l => (
+            {nearbyPreview.length > 0 ? nearbyPreview.map(l => (
               <motion.div key={l.id} variants={itemVariants}>
-                <Link href={`/laundry/${l.id}`} className="group block">
+                <Link  href={`/laundry/${l.id}`} className="group block">
                   <motion.div
                     className="bg-white rounded-3xl overflow-hidden shadow-lg"
                     whileHover={{ y: -8, boxShadow: '0 30px 60px rgba(0,0,0,0.20)' }}
@@ -378,9 +394,9 @@ export default function Home() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5">
                         <MapPin size={11} className="text-[#1D6076]" strokeWidth={2.5} />
-                        <span className="text-xs font-semibold text-gray-800">{l.distance} km</span>
+                        <span className="text-xs font-semibold text-gray-800">{l.distanceLabel}</span>
                       </div>
-                      {l.status === 'active' && (
+                      {l.isAvailable && (
                         <div className="absolute top-3 left-3 bg-emerald-500 rounded-full px-3 py-1 flex items-center gap-1.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                           <span className="text-white text-xs font-semibold">Open</span>
@@ -392,12 +408,12 @@ export default function Home() {
                         <h3 className="text-gray-900 font-semibold text-base">{l.name}</h3>
                         <div className="flex items-center gap-1 shrink-0 ml-2">
                           <Star size={13} className="text-amber-400 fill-amber-400" strokeWidth={0} />
-                          <span className="text-sm font-semibold text-gray-800">{l.rating}</span>
+                          <span className="text-sm font-semibold text-gray-800">{l.rating.toFixed(1)}</span>
                         </div>
                       </div>
-                      <p className="text-gray-400 text-xs mb-3">{l.category}</p>
+                      <p className="text-gray-400 text-xs mb-3">{l.address}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">From <strong className="text-[#1D6076]">{Math.min(...l.services.map(s => s.price))} EGP</strong></span>
+                        <span className="text-xs text-gray-500">From <strong className="text-[#1D6076]">{l.services.length ? Math.min(...l.services.map(s => s.price)) : 0} EGP</strong></span>
                         <span className="text-xs font-semibold text-[#1D6076] flex items-center gap-0.5">
                           View Services <ChevronRight size={12} strokeWidth={2.5} />
                         </span>
@@ -406,7 +422,17 @@ export default function Home() {
                   </motion.div>
                 </Link>
               </motion.div>
-            ))}
+            )) : (
+              <motion.div
+                variants={itemVariants}
+                className="md:col-span-3 bg-white/10 backdrop-blur-sm border border-white/10 rounded-3xl p-8 text-center"
+              >
+                <p className="text-white text-lg font-semibold mb-2">No live laundries yet</p>
+                <p className="text-white/65 text-sm max-w-md mx-auto">
+                  The deployed backend is connected, but it is currently returning an empty laundries list.
+                </p>
+              </motion.div>
+            )}
           </motion.div>
         </div>
       </Section>
@@ -419,7 +445,7 @@ export default function Home() {
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] as const }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
             >
               <span className="inline-block bg-[#EBA050]/15 text-[#EBA050] text-xs font-semibold tracking-widest px-4 py-1.5 rounded-full mb-4 uppercase">
                 Why Ndeef
@@ -436,7 +462,7 @@ export default function Home() {
               initial={{ opacity: 0, x: 40, scale: 0.95 }}
               whileInView={{ opacity: 1, x: 0, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] as const, delay: 0.1 }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
               whileHover={{ scale: 1.02 }}
             >
               <ImageWithFallback src={DELIVERY_IMG} alt="Delivery service" className="w-full h-full object-cover" />
@@ -528,7 +554,7 @@ export default function Home() {
                     </motion.span>
                   ))}
                 </div>
-                <p className="text-gray-700 text-sm leading-relaxed mb-5 italic">&quot;{text}&quot;</p>
+                <p className="text-gray-700 text-sm leading-relaxed mb-5 italic">&ldquo;{text}&rdquo;</p>
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1D6076] to-[#2a7a94] flex items-center justify-center">
                     <span className="text-white text-xs font-semibold">{name[0]}</span>
@@ -581,7 +607,7 @@ export default function Home() {
             className="flex flex-wrap gap-3 justify-center"
           >
             <Link
-              href="/nearby"
+               href="/nearby"
               className="flex items-center gap-2 bg-white font-semibold px-8 py-4 rounded-2xl hover:bg-gray-50 hover:-translate-y-0.5 shadow-xl transition-all text-sm"
               style={{ color: '#1D6076' }}
             >
@@ -590,7 +616,7 @@ export default function Home() {
             </Link>
             {!isLoggedIn && (
               <Link
-                href="/signup"
+                 href="/signup"
                 className="flex items-center gap-2 font-semibold px-8 py-4 rounded-2xl hover:-translate-y-0.5 shadow-xl transition-all text-sm text-white"
                 style={{ background: '#0d3d50' }}
               >
