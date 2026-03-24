@@ -87,6 +87,23 @@ export default function SignupPage() {
   const [address,   setAddress]   = useState('');
   const [errors,    setErrors]    = useState<Record<string, string>>({});
 
+  const getDuplicateEmailMessage = (message?: string) => {
+    if (!message) return '';
+
+    const normalized = message.toLowerCase();
+    const looksLikeDuplicateEmail =
+      normalized.includes('email') &&
+      (
+        normalized.includes('already') ||
+        normalized.includes('exists') ||
+        normalized.includes('registered') ||
+        normalized.includes('taken') ||
+        normalized.includes('duplicate')
+      );
+
+    return looksLikeDuplicateEmail ? 'This email is already existed.' : '';
+  };
+
   const validateStep1 = () => {
     const e: Record<string, string> = {};
     if (!firstName.trim()) e.firstName = 'First name is required';
@@ -118,6 +135,29 @@ export default function SignupPage() {
     const result = await signup(data);
     setLoading(false);
     if (!result.ok) {
+      const emailFieldError = result.fieldErrors?.email;
+
+      if (emailFieldError) {
+        setStep(1);
+        setErrors((prev) => ({
+          ...prev,
+          email: emailFieldError,
+          submit: '',
+        }));
+        return;
+      }
+
+      const duplicateEmailMessage = getDuplicateEmailMessage(result.message);
+      if (duplicateEmailMessage) {
+        setStep(1);
+        setErrors((prev) => ({
+          ...prev,
+          email: duplicateEmailMessage,
+          submit: '',
+        }));
+        return;
+      }
+
       setErrors((prev) => ({
         ...prev,
         submit: result.message ?? "Unable to create your account.",
@@ -125,12 +165,7 @@ export default function SignupPage() {
       return;
     }
 
-    if (result.requiresVerification) {
-      router.push(`/verify-email?email=${encodeURIComponent(result.email ?? email)}`);
-      return;
-    }
-
-    router.replace('/');
+    router.replace(`/login?email=${encodeURIComponent(result.email ?? email)}`);
   };
 
   const handleSocial = async (provider: string, credential: string) => {
@@ -217,10 +252,10 @@ export default function SignupPage() {
 
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
-                  <InputField label="First name" placeholder="Basel" value={firstName} onChange={v => { setFirstName(v); setErrors(p => ({ ...p, firstName: '' })); }} error={errors.firstName} icon={User} />
-                  <InputField label="Last name"  placeholder="Ahmed" value={lastName}  onChange={v => { setLastName(v);  setErrors(p => ({ ...p, lastName: '' }));  }} error={errors.lastName}  icon={User} />
+                  <InputField label="First name" placeholder="FName" value={firstName} onChange={v => { setFirstName(v); setErrors(p => ({ ...p, firstName: '' })); }} error={errors.firstName} icon={User} />
+                  <InputField label="Last name"  placeholder="LName" value={lastName}  onChange={v => { setLastName(v);  setErrors(p => ({ ...p, lastName: '' }));  }} error={errors.lastName}  icon={User} />
                 </div>
-                <InputField label="Email" type="email" placeholder="you@example.com" value={email} onChange={v => { setEmail(v); setErrors(p => ({ ...p, email: '' })); }} error={errors.email} icon={Mail} />
+                <InputField label="Email" type="email" placeholder="you@example.com" value={email} onChange={v => { setEmail(v); setErrors(p => ({ ...p, email: '', submit: '' })); }} error={errors.email} icon={Mail} />
                 <InputField
                   label="Create password" type={showPwd ? 'text' : 'password'} placeholder="Min. 6 characters"
                   value={password} onChange={v => { setPassword(v); setErrors(p => ({ ...p, password: '' })); }}

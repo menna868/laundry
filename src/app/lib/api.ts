@@ -26,6 +26,7 @@ export interface AuthUser {
 export interface AuthResult {
   ok: boolean;
   message?: string;
+  fieldErrors?: Record<string, string>;
   requiresVerification?: boolean;
   user?: AuthUser;
   email?: string;
@@ -175,6 +176,10 @@ export interface VerifyEmailResponse {
   token: string;
 }
 
+export interface MessageResponse {
+  message: string;
+}
+
 export const categoryLabels: Record<string, string> = {
   wash: "Wash & Fold",
   iron: "Ironing",
@@ -272,6 +277,15 @@ function getErrorMessage(data: unknown, fallback = "Request failed.") {
   return fallback;
 }
 
+function looksLikeHtml(text: string) {
+  const trimmed = text.trim().toLowerCase();
+  return (
+    trimmed.startsWith("<!doctype html") ||
+    trimmed.startsWith("<html") ||
+    trimmed.includes("<title>site under construction</title>")
+  );
+}
+
 async function request<T>(
   path: string,
   init?: RequestInit,
@@ -299,11 +313,35 @@ async function request<T>(
 
   const text = await response.text();
   const data = text ? safeJsonParse(text) : null;
+  const receivedHtml = typeof data === "string" && looksLikeHtml(data);
 
   if (!response.ok) {
+    const status500Or502 =
+      response.status === 500 || response.status === 502 || response.status === 503;
     throw new ApiError(
-      getErrorMessage(data, `Request failed with status ${response.status}.`),
+      getErrorMessage(
+        receivedHtml
+          ? {
+              message:
+                "The backend returned an HTML placeholder page instead of API JSON. Verify NDEEF_BACKEND_URL.",
+            }
+          : status500Or502 && !data
+            ? {
+                message:
+                  "Login is unavailable right now because the app could not reach the backend service.",
+              }
+          : data,
+        `Request failed with status ${response.status}.`,
+      ),
       response.status,
+      data,
+    );
+  }
+
+  if (receivedHtml) {
+    throw new ApiError(
+      "The backend returned an HTML page instead of API JSON. Verify NDEEF_BACKEND_URL.",
+      502,
       data,
     );
   }
@@ -582,6 +620,24 @@ export async function verifyEmailRequest(email: string, otpCode: string) {
   return request<VerifyEmailResponse>("/Auth/verify-email", {
     method: "POST",
     body: JSON.stringify({ email, otpCode }),
+  });
+}
+
+export async function forgotPasswordRequest(email: string) {
+  return request<MessageResponse>("/Auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPasswordRequest(payload: {
+  email: string;
+  otpCode: string;
+  newPassword: string;
+}) {
+  return request<MessageResponse>("/Auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 

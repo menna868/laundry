@@ -25,13 +25,20 @@ export default function Login() {
   const { login, socialLogin } = useAuth();
 
   const from = searchParams.get("from") || "/";
+  const initialEmail = searchParams.get("email") || "";
+  const resetStatus = searchParams.get("reset");
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [socialLoad, setSocialLoad] = useState("");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState(
+    resetStatus === "success"
+      ? "Your password was reset successfully. Please sign in with your new password."
+      : "",
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
@@ -120,6 +127,17 @@ export default function Login() {
             </div>
           )}
 
+          {info && (
+            <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3 mb-5">
+              <AlertCircle
+                size={16}
+                className="text-emerald-600 shrink-0"
+                strokeWidth={2}
+              />
+              <p className="text-emerald-700 text-sm">{info}</p>
+            </div>
+          )}
+
           {/* Social buttons */}
           <div className="space-y-3 mb-6">
             {socialLoad === "google" ? (
@@ -161,6 +179,7 @@ export default function Login() {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
+                    setInfo("");
                     setErrors((p) => ({ ...p, email: "" }));
                   }}
                   className={`w-full bg-gray-50 border rounded-2xl px-4 py-3.5 pl-11 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all ${
@@ -189,17 +208,12 @@ export default function Login() {
                 <label className="text-xs font-medium text-gray-600">
                   Password
                 </label>
-                <button
-                  type="button"
+                <Link
+                  href={`/forgot-password${email ? `?email=${encodeURIComponent(email)}` : ""}`}
                   className="text-xs text-[#1D6076] hover:underline"
-                  onClick={() =>
-                    setError(
-                      "Password reset is available in the backend, but this frontend screen is not wired yet.",
-                    )
-                  }
                 >
                   Forgot password?
-                </button>
+                </Link>
               </div>
               <div className="relative">
                 <input
@@ -208,6 +222,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
+                    setInfo("");
                     setErrors((p) => ({ ...p, password: "" }));
                   }}
                   className={`w-full bg-gray-50 border rounded-2xl px-4 py-3.5 pl-11 pr-11 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all ${

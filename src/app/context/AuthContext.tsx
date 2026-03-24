@@ -5,16 +5,17 @@ import {
   ApiError,
   AuthResult,
   AuthUser,
+  forgotPasswordRequest,
   googleLoginRequest,
   loginRequest,
   mapTokenToAuthUser,
   mapUserDtoToAuthUser,
   registerRequest,
+  resetPasswordRequest,
   verifyEmailRequest,
 } from "@/app/lib/api";
 
 const STORAGE_KEY = "nadeef_user";
-
 export type User = AuthUser;
 
 interface AuthContextType {
@@ -24,6 +25,12 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<AuthResult>;
   signup: (data: SignupData) => Promise<AuthResult>;
   verifyEmail: (email: string, otpCode: string) => Promise<AuthResult>;
+  forgotPassword: (email: string) => Promise<AuthResult>;
+  resetPassword: (
+    email: string,
+    otpCode: string,
+    newPassword: string,
+  ) => Promise<AuthResult>;
   logout: () => void;
   socialLogin: (provider: string, credential?: string) => Promise<AuthResult>;
 }
@@ -38,6 +45,26 @@ export interface SignupData {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+function normalizeFieldErrors(data: unknown) {
+  if (!data || typeof data !== "object") return undefined;
+
+  const record = data as Record<string, unknown>;
+  const errors = record.errors;
+  if (!errors || typeof errors !== "object") return undefined;
+
+  const normalized: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(errors as Record<string, unknown>)) {
+    if (Array.isArray(value) && typeof value[0] === "string") {
+      normalized[key.toLowerCase()] = value[0];
+    } else if (typeof value === "string") {
+      normalized[key.toLowerCase()] = value;
+    }
+  }
+
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
 
 function readStoredUser() {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -62,10 +89,64 @@ function persistUser(user: User | null) {
 
 function toAuthError(error: unknown): AuthResult {
   if (error instanceof ApiError) {
-    return { ok: false, message: error.message };
+    const message =
+      error.message === "Invalid Password."
+        ? "Password is wrong."
+        : error.message;
+
+    return {
+      ok: false,
+      message,
+      fieldErrors: normalizeFieldErrors(error.data),
+    };
   }
 
   return { ok: false, message: "Something went wrong. Please try again." };
+}
+
+function getEmailPrefix(email: string) {
+  return (
+    email
+    .split("@")[0]
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))[0] || "Customer"
+  );
+}
+
+function parseJwtPayload(token: string) {
+  try {
+    const [, payload] = token.split(".");
+    if (!payload) return null;
+
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    );
+
+    return JSON.parse(atob(padded)) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function enrichGoogleUser(user: User, credential?: string): User {
+  const payload = credential ? parseJwtPayload(credential) : null;
+  const emailFromToken =
+    typeof payload?.email === "string" ? payload.email : undefined;
+  const email = user.email || emailFromToken || "";
+  const derivedFirstName = email ? getEmailPrefix(email) : "Google";
+
+  return {
+    ...user,
+    email,
+    firstName: user.firstName?.trim() || derivedFirstName,
+    lastName: user.lastName?.trim() || "User",
+    name:
+      user.name?.trim() ||
+      `${user.firstName?.trim() || derivedFirstName} ${user.lastName?.trim() || "User"}`.trim(),
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -156,12 +237,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const response = await googleLoginRequest(credential);
-      const nextUser = mapUserDtoToAuthUser(response);
+      const nextUser = enrichGoogleUser(mapUserDtoToAuthUser(response), credential);
 
       setUser(nextUser);
       persistUser(nextUser);
 
       return { ok: true, user: nextUser };
+    } catch (error) {
+      return toAuthError(error);
+    }
+  };
+
+  const forgotPassword = async (email: string): Promise<AuthResult> => {
+    try {
+      const response = await forgotPasswordRequest(email);
+      return {
+        ok: true,
+        email,
+        message: response.message,
+      };
+    } catch (error) {
+      return toAuthError(error);
+    }
+  };
+
+  const resetPassword = async (
+    email: string,
+    otpCode: string,
+    newPassword: string,
+  ): Promise<AuthResult> => {
+    try {
+      const response = await resetPasswordRequest({
+        email,
+        otpCode,
+        newPassword,
+      });
+
+      // Force a fresh sign-in after password reset so stale local auth
+      // state cannot make it look like the old password still works.
+      setUser(null);
+      persistUser(null);
+
+      return {
+        ok: true,
+        email,
+        message: response.message,
+      };
     } catch (error) {
       return toAuthError(error);
     }
@@ -176,11 +297,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        isLoggedIn: !!user?.token,
+        isLoggedIn: !!user,
         isAuthReady,
         login,
         signup,
         verifyEmail,
+        forgotPassword,
+        resetPassword,
         logout,
         socialLogin,
       }}

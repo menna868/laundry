@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "motion/react";
 import { TopNav } from "@/app/components/TopNav";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import { useEffect } from "react";
 import { ReactNode } from "react";
@@ -23,12 +23,11 @@ const pageVariants = {
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const { isLoggedIn, isAuthReady } = useAuth();
-  const authPaths = ["/login", "/signup"];
+  const authPaths = ["/login", "/signup", "/forgot-password", "/reset-password"];
   const isAuthPage = authPaths.includes(pathname);
-  const shouldShowTopNav = !isAuthPage || !!searchParams.get("from");
+  const shouldShowTopNav = !isAuthPage;
 
   useEffect(() => {
     if (!isAuthReady) return;
