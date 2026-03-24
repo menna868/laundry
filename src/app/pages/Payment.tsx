@@ -12,6 +12,8 @@ import {
   AlertCircle,
   ChevronRight,
   Receipt,
+  Smartphone,
+  Banknote,
 } from "lucide-react";
 import {
   ApiError,
@@ -19,24 +21,12 @@ import {
   getOrderByIdRequest,
   mapOrderDtoToUiOrder,
   processPaymentRequest,
+  payWithCashRequest,
 } from "@/app/lib/api";
 import { useAuth } from "../context/AuthContext";
 
 type FlowState = "loading" | "invalid" | "form" | "processing" | "success" | "failed";
-
-function formatCardNumber(value: string) {
-  return value
-    .replace(/\D/g, "")
-    .slice(0, 16)
-    .replace(/(.{4})/g, "$1 ")
-    .trim();
-}
-
-function formatExpiry(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 4);
-  if (digits.length > 2) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return digits;
-}
+type PaymentMethod = "card" | "mobile_wallet" | "cash";
 
 function SuccessScreen({
   order,
@@ -55,9 +45,9 @@ function SuccessScreen({
           <ShieldCheck size={16} className="text-white" strokeWidth={2} />
         </div>
       </div>
-      <h2 className="text-2xl text-gray-900 mb-2">Payment Successful!</h2>
+      <h2 className="text-2xl text-gray-900 mb-2">Payment Registered!</h2>
       <p className="text-gray-500 text-sm leading-relaxed mb-2 max-w-xs">
-        Your payment was confirmed by the backend and your order is now active.
+        Your cash on delivery order has been registered successfully.
       </p>
       <p className="text-[#1D6076] text-sm font-medium mb-8">Order #{order.id}</p>
 
@@ -73,7 +63,7 @@ function SuccessScreen({
           </span>
         </div>
         <div className="border-t border-gray-200 pt-2.5 flex justify-between text-sm">
-          <span className="text-gray-500">Total paid</span>
+          <span className="text-gray-500">Total</span>
           <span className="text-[#1D6076] font-semibold">{order.total} EGP</span>
         </div>
       </div>
@@ -118,6 +108,32 @@ function FailedScreen({
   );
 }
 
+const paymentMethods: {
+  key: PaymentMethod;
+  label: string;
+  sublabel: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    key: "card",
+    label: "Credit / Debit Card",
+    sublabel: "Pay securely via Kashier",
+    icon: <CreditCard size={20} className="text-[#1D6076]" strokeWidth={1.8} />,
+  },
+  {
+    key: "mobile_wallet",
+    label: "Mobile Wallet",
+    sublabel: "Vodafone Cash, Fawry & more",
+    icon: <Smartphone size={20} className="text-[#1D6076]" strokeWidth={1.8} />,
+  },
+  {
+    key: "cash",
+    label: "Cash on Delivery",
+    sublabel: "Pay when your order arrives",
+    icon: <Banknote size={20} className="text-[#1D6076]" strokeWidth={1.8} />,
+  },
+];
+
 export default function Payment() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -126,13 +142,9 @@ export default function Payment() {
 
   const [flowState, setFlowState] = useState<FlowState>("loading");
   const [order, setOrder] = useState<UiOrder | null>(null);
-  const [cardName, setCardName] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("card");
   const [failureMessage, setFailureMessage] = useState(
-    "Your payment could not be processed. Please check your card details and try again.",
+    "Your payment could not be processed. Please try again.",
   );
 
   useEffect(() => {
@@ -163,45 +175,45 @@ export default function Payment() {
     loadOrder();
   }, [orderId, user?.token]);
 
-  const validate = () => {
-    const nextErrors: Record<string, string> = {};
-    if (!cardName.trim()) nextErrors.cardName = "Cardholder name is required";
-    if (cardNumber.replace(/\s/g, "").length < 16) {
-      nextErrors.cardNumber = "Enter a valid 16-digit card number";
-    }
-    if (expiry.length < 5) nextErrors.expiry = "Enter a valid expiry date";
-    if (cvv.length < 3) nextErrors.cvv = "Enter a valid CVV";
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
-
   const handlePay = async () => {
-    if (!user?.token || !order || !validate()) return;
+    if (!user?.token || !order) return;
 
     try {
       setFlowState("processing");
 
-      await processPaymentRequest(user.token, {
+      if (selectedMethod === "cash") {
+        // Cash on delivery — no redirect needed
+        await payWithCashRequest(user.token, Number(order.id), Number(order.total));
+        setFlowState("success");
+        return;
+      }
+
+      // Card or Mobile Wallet → Kashier Hosted Page redirect
+      const response = await processPaymentRequest(user.token, {
         orderId: Number(order.id),
         amount: Number(order.total),
-        paymentMethod: "CreditCard",
+        paymentMethod: selectedMethod === "card" ? "CreditCard" : "MobilePayment",
       });
 
-      const refreshed = await getOrderByIdRequest(user.token, order.id);
-      setOrder(mapOrderDtoToUiOrder(refreshed));
-      setFlowState("success");
+      if (response && response.checkoutUrl) {
+        window.location.href = response.checkoutUrl;
+      } else {
+        console.error("Invalid payment response:", response);
+        throw new Error(`No checkout URL returned. Response: ${JSON.stringify(response)}`);
+      }
     } catch (error) {
-      setFailureMessage(
+      const msg =
         error instanceof ApiError
+          ? `${error.message} (status: ${error.status})`
+          : error instanceof Error
           ? error.message
-          : "Your payment could not be processed right now.",
-      );
+          : "Your payment could not be initiated right now.";
+      setFailureMessage(msg);
       setFlowState("failed");
     }
   };
 
   const handleRetry = () => {
-    setErrors({});
     setFlowState("form");
   };
 
@@ -225,9 +237,7 @@ export default function Payment() {
               <h1 className="text-gray-900 text-lg">Secure Payment</h1>
               <div className="flex items-center gap-1">
                 <Lock size={11} className="text-emerald-500" strokeWidth={2.5} />
-                <p className="text-xs text-emerald-600">
-                  Backend payment confirmation
-                </p>
+                <p className="text-xs text-emerald-600">Powered by Kashier</p>
               </div>
             </div>
           </div>
@@ -246,7 +256,7 @@ export default function Payment() {
           <AlertCircle size={36} className="text-red-400 mb-4" strokeWidth={1.5} />
           <p className="text-gray-700 mb-1">Invalid payment request</p>
           <p className="text-gray-400 text-sm mb-6">
-            No valid backend order was found for this payment screen.
+            No valid order was found for this payment screen.
           </p>
           <Link href="/nearby" className="text-[#1D6076] text-sm underline">
             Browse Laundries
@@ -272,6 +282,7 @@ export default function Payment() {
       {flowState === "form" && order && (
         <>
           <div className="max-w-2xl mx-auto px-4 md:px-8 py-5 space-y-4 pb-40">
+            {/* Order Summary */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Receipt size={15} className="text-[#EBA050]" strokeWidth={2} />
@@ -311,144 +322,57 @@ export default function Payment() {
               </div>
             </div>
 
+            {/* Payment Method Selection */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <div className="flex items-center gap-2 mb-5">
-                <CreditCard size={15} className="text-[#1D6076]" strokeWidth={2} />
-                <p className="text-xs font-semibold text-gray-400 tracking-wider">
-                  CARD DETAILS
-                </p>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-xs text-gray-500 mb-1.5">
-                  Cardholder Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="Name on card"
-                  value={cardName}
-                  onChange={(event) => {
-                    setCardName(event.target.value);
-                    setErrors((current) => ({ ...current, cardName: "" }));
-                  }}
-                  className={`w-full bg-gray-50 border rounded-xl px-4 py-3.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all ${
-                    errors.cardName
-                      ? "border-red-300 focus:ring-red-200"
-                      : "border-gray-200 focus:border-[#1D6076] focus:ring-[#1D6076]/20"
-                  }`}
-                />
-                {errors.cardName && (
-                  <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-                    <AlertCircle size={11} />
-                    {errors.cardName}
-                  </p>
-                )}
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-xs text-gray-500 mb-1.5">Card Number</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="0000 0000 0000 0000"
-                    value={cardNumber}
-                    onChange={(event) => {
-                      setCardNumber(formatCardNumber(event.target.value));
-                      setErrors((current) => ({ ...current, cardNumber: "" }));
-                    }}
-                    className={`w-full bg-gray-50 border rounded-xl px-4 py-3.5 text-sm text-gray-900 placeholder-gray-400 pr-12 focus:outline-none focus:ring-1 transition-all ${
-                      errors.cardNumber
-                        ? "border-red-300 focus:ring-red-200"
-                        : "border-gray-200 focus:border-[#1D6076] focus:ring-[#1D6076]/20"
+              <p className="text-xs font-semibold text-gray-400 tracking-wider mb-4">
+                PAYMENT METHOD
+              </p>
+              <div className="space-y-3">
+                {paymentMethods.map((method) => (
+                  <button
+                    key={method.key}
+                    onClick={() => setSelectedMethod(method.key)}
+                    className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
+                      selectedMethod === method.key
+                        ? "border-[#1D6076] bg-[#1D6076]/5"
+                        : "border-gray-100 hover:border-gray-200"
                     }`}
-                  />
-                  <CreditCard
-                    size={16}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
-                    strokeWidth={1.5}
-                  />
-                </div>
-                {errors.cardNumber && (
-                  <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-                    <AlertCircle size={11} />
-                    {errors.cardNumber}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Expiry Date</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="MM/YY"
-                    value={expiry}
-                    onChange={(event) => {
-                      setExpiry(formatExpiry(event.target.value));
-                      setErrors((current) => ({ ...current, expiry: "" }));
-                    }}
-                    className={`w-full bg-gray-50 border rounded-xl px-4 py-3.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all ${
-                      errors.expiry
-                        ? "border-red-300 focus:ring-red-200"
-                        : "border-gray-200 focus:border-[#1D6076] focus:ring-[#1D6076]/20"
-                    }`}
-                  />
-                  {errors.expiry && (
-                    <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-                      <AlertCircle size={11} />
-                      {errors.expiry}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">CVV</label>
-                  <div className="relative">
-                    <input
-                      type="password"
-                      inputMode="numeric"
-                      maxLength={4}
-                      placeholder="***"
-                      value={cvv}
-                      onChange={(event) => {
-                        setCvv(event.target.value.replace(/\D/g, "").slice(0, 4));
-                        setErrors((current) => ({ ...current, cvv: "" }));
-                      }}
-                      className={`w-full bg-gray-50 border rounded-xl px-4 py-3.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all ${
-                        errors.cvv
-                          ? "border-red-300 focus:ring-red-200"
-                          : "border-gray-200 focus:border-[#1D6076] focus:ring-[#1D6076]/20"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#1D6076]/10 flex items-center justify-center shrink-0">
+                      {method.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-900 text-sm font-medium">{method.label}</p>
+                      <p className="text-xs text-gray-400">{method.sublabel}</p>
+                    </div>
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                        selectedMethod === method.key
+                          ? "border-[#1D6076] bg-[#1D6076]"
+                          : "border-gray-300"
                       }`}
-                    />
-                    <Lock
-                      size={14}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      strokeWidth={1.5}
-                    />
-                  </div>
-                  {errors.cvv && (
-                    <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-                      <AlertCircle size={11} />
-                      {errors.cvv}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 mt-4 bg-emerald-50 rounded-xl px-3 py-2.5">
-                <ShieldCheck
-                  size={14}
-                  className="text-emerald-500 shrink-0"
-                  strokeWidth={2}
-                />
-                <p className="text-xs text-emerald-700">
-                  The backend only uses this screen to confirm the payment request.
-                </p>
+                    >
+                      {selectedMethod === method.key && (
+                        <Check size={10} className="text-white" strokeWidth={3} />
+                      )}
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
+
+            {/* Kashier Security Badge (shown for card/mobile wallet) */}
+            {selectedMethod !== "cash" && (
+              <div className="flex items-center gap-2 justify-center bg-emerald-50 rounded-xl px-3 py-2.5">
+                <ShieldCheck size={14} className="text-emerald-500 shrink-0" strokeWidth={2} />
+                <p className="text-xs text-emerald-700">
+                  You&apos;ll be redirected to Kashier&apos;s secure checkout page.
+                </p>
+              </div>
+            )}
           </div>
 
+          {/* Bottom Pay Button */}
           <div className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-100 shadow-lg px-4 md:px-8 py-4">
             <div className="max-w-2xl mx-auto">
               <button
@@ -456,7 +380,9 @@ export default function Payment() {
                 className="w-full bg-[#1D6076] text-white py-4 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#2a7a94] active:scale-[0.99] transition-all shadow-sm"
               >
                 <Lock size={15} strokeWidth={2.5} />
-                Pay {order.total} EGP Securely
+                {selectedMethod === "cash"
+                  ? `Confirm Cash Order — ${order.total} EGP`
+                  : `Pay ${order.total} EGP Securely`}
               </button>
             </div>
           </div>
