@@ -592,7 +592,7 @@ export function mapOrderDtoToUiOrder(order: BackendOrderDto): UiOrder {
 export async function loginRequest(email: string, password: string) {
   return request<BackendUserDto>("/Auth/login", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ Email: email, Password: password }),
   });
 }
 
@@ -612,21 +612,27 @@ export async function registerRequest(payload: {
 }) {
   return request<BackendUserDto>("/Auth/register", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      Name: payload.name,
+      Email: payload.email,
+      Password: payload.password,
+      PhoneNumber: payload.phoneNumber,
+      Role: payload.role,
+    }),
   });
 }
 
 export async function verifyEmailRequest(email: string, otpCode: string) {
   return request<VerifyEmailResponse>("/Auth/verify-email", {
     method: "POST",
-    body: JSON.stringify({ email, otpCode }),
+    body: JSON.stringify({ Email: email, OtpCode: otpCode }),
   });
 }
 
 export async function forgotPasswordRequest(email: string) {
   return request<MessageResponse>("/Auth/forgot-password", {
     method: "POST",
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ Email: email }),
   });
 }
 
@@ -637,7 +643,11 @@ export async function resetPasswordRequest(payload: {
 }) {
   return request<MessageResponse>("/Auth/reset-password", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      Email: payload.email,
+      OtpCode: payload.otpCode,
+      NewPassword: payload.newPassword,
+    }),
   });
 }
 

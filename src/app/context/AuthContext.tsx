@@ -168,6 +168,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { ok: true, user: nextUser };
     } catch (error) {
+      setUser(null);
+      persistUser(null);
       return toAuthError(error);
     }
   };
@@ -244,6 +246,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { ok: true, user: nextUser };
     } catch (error) {
+      setUser(null);
+      persistUser(null);
       return toAuthError(error);
     }
   };
@@ -267,11 +271,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     newPassword: string,
   ): Promise<AuthResult> => {
     try {
-      const response = await resetPasswordRequest({
+      await resetPasswordRequest({
         email,
         otpCode,
         newPassword,
       });
+
+      try {
+        // Verify the backend actually accepts the new password before we
+        // tell the UI the reset succeeded.
+        await loginRequest(email, newPassword);
+      } catch {
+        setUser(null);
+        persistUser(null);
+        return {
+          ok: false,
+          message:
+            "The backend reported success, but it still rejected the new password. Please request a new OTP and try again.",
+        };
+      }
 
       // Force a fresh sign-in after password reset so stale local auth
       // state cannot make it look like the old password still works.
@@ -281,7 +299,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return {
         ok: true,
         email,
-        message: response.message,
+        message: "Password has been reset successfully.",
       };
     } catch (error) {
       return toAuthError(error);
