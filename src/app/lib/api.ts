@@ -76,6 +76,12 @@ export interface BackendPaymentDto {
   paymentStatus: string;
   paymentMethod: string;
   paymentDate: string | null;
+  checkoutUrl?: string; // Added for Kashier
+}
+
+export interface KashierResponseDto {
+  orderId: string;
+  checkoutUrl: string;
 }
 
 export interface BackendOrderDto {
@@ -782,17 +788,53 @@ export async function processPaymentRequest(
   payload: {
     orderId: number;
     amount: number;
-    paymentMethod: "CreditCard";
+    paymentMethod: "CreditCard" | "MobilePayment";
   },
 ) {
-  return request<BackendPaymentDto>(
-    "/Payments/process",
+  // This calls /api/wallet/pay/mobile-wallet/{orderId} or the card endpoint
+  // For Kashier Hosted Page (card), we use the mobile-wallet endpoint which internally
+  // calls CreateCardPaymentAsync and returns a checkoutUrl
+  return request<KashierResponseDto>(
+    `/wallet/pay/mobile-wallet/${payload.orderId}`,
     {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ amount: payload.amount }),
     },
     token,
   );
+}
+
+export async function payWithCashRequest(
+  token: string,
+  orderId: number,
+  amount: number,
+) {
+  return request<{ message: string }>(
+    `/wallet/pay/cash/${orderId}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ amount }),
+    },
+    token,
+  );
+}
+
+export async function chargeWalletRequest(
+  token: string,
+  amount: number,
+) {
+  return request<KashierResponseDto>(
+    "/wallet/charge",
+    {
+      method: "POST",
+      body: JSON.stringify({ amount }),
+    },
+    token,
+  );
+}
+
+export async function getWalletBalanceRequest(token: string) {
+  return request<{ balance: number }>("/wallet/balance", undefined, token);
 }
 
 export async function changePasswordRequest(
