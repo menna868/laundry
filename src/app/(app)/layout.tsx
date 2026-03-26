@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { TopNav } from "@/app/components/TopNav";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ReactNode } from "react";
 
 const pageVariants = {
@@ -25,17 +25,29 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { isLoggedIn, isAuthReady } = useAuth();
+  const hasHandledDevLandingRef = useRef(false);
   const authPaths = ["/login", "/signup", "/forgot-password", "/reset-password"];
   const isAuthPage = authPaths.includes(pathname);
-  const shouldShowTopNav = !isAuthPage;
 
   useEffect(() => {
     if (!isAuthReady) return;
 
+    if (
+      process.env.NODE_ENV === "development" &&
+      !hasHandledDevLandingRef.current &&
+      pathname !== "/"
+    ) {
+      hasHandledDevLandingRef.current = true;
+      router.replace("/");
+      return;
+    }
+
+    hasHandledDevLandingRef.current = true;
+
     if (isLoggedIn && isAuthPage) {
       router.replace("/");
     }
-  }, [isAuthPage, isAuthReady, isLoggedIn, router]);
+  }, [isAuthPage, isAuthReady, isLoggedIn, pathname, router]);
 
   if (!isAuthReady) {
     return null;
@@ -43,7 +55,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
-      {shouldShowTopNav && <TopNav />}
+      <TopNav />
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={pathname}

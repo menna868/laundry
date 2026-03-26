@@ -17,6 +17,7 @@ import {
 
 const STORAGE_KEY = "nadeef_user";
 export type User = AuthUser;
+const SHOULD_RESTORE_STORED_USER = process.env.NODE_ENV !== "development";
 
 interface AuthContextType {
   user: User | null;
@@ -154,7 +155,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    setUser(readStoredUser());
+    const storedUser = SHOULD_RESTORE_STORED_USER ? readStoredUser() : null;
+
+    if (!SHOULD_RESTORE_STORED_USER) {
+      persistUser(null);
+    }
+
+    setUser(storedUser);
     setIsAuthReady(true);
   }, []);
 
