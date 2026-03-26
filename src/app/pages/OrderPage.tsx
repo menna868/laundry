@@ -27,6 +27,7 @@ import {
   placeOrderRequest,
 } from "@/app/lib/api";
 import { useAuth } from "../context/AuthContext";
+import { MapView } from "@/app/components/MapView";
 
 const dates = ["Today", "Tomorrow", "Day After"];
 const timeSlots = [
@@ -60,6 +61,52 @@ function toPickupDateTime(dateLabel: string, timeSlot: string) {
   return date.toISOString();
 }
 
+type LocationState = {
+  latitude: number;
+  longitude: number;
+  label: string;
+};
+
+function getCurrentLocation(): Promise<{ latitude: number; longitude: number }> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation is not supported on this device."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) =>
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }),
+      () => reject(new Error("We couldn't access your current location.")),
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
+    );
+  });
+}
+
+async function reverseGeocode(latitude: number, longitude: number) {
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+    {
+      headers: {
+        accept: "application/json",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Reverse geocoding failed.");
+  }
+
+  const data = (await response.json()) as {
+    display_name?: string;
+  };
+
+  return data.display_name?.trim() || "";
+}
+
 export default function OrderPage() {
   const { laundryId } = useParams<{ laundryId: string }>();
   const searchParams = useSearchParams();
@@ -88,6 +135,9 @@ export default function OrderPage() {
   const [pickupAddress, setPickupAddress] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [sameAddress, setSameAddress] = useState(true);
+  const [pickupLocation, setPickupLocation] = useState<LocationState | null>(null);
+  const [locatingPickup, setLocatingPickup] = useState(false);
+  const [locationError, setLocationError] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"credit" | "cash">("credit");
   const [validating, setValidating] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -142,6 +192,48 @@ export default function OrderPage() {
 
     loadLaundry();
   }, [laundryId, selectedServiceIds]);
+
+  useEffect(() => {
+    if (!isAuthReady || !isLoggedIn) return;
+    if (pickupAddress.trim()) return;
+
+    const detectPickupLocation = async () => {
+      try {
+        setLocatingPickup(true);
+        setLocationError("");
+
+        const coords = await getCurrentLocation();
+        let resolvedAddress = "";
+
+        try {
+          resolvedAddress = await reverseGeocode(
+            coords.latitude,
+            coords.longitude,
+          );
+        } catch {
+          resolvedAddress = `Current location (${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)})`;
+        }
+
+        setPickupLocation({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          label: resolvedAddress,
+        });
+        setPickupAddress(resolvedAddress);
+        setErrors((current) => ({ ...current, pickup: "" }));
+      } catch (error) {
+        setLocationError(
+          error instanceof Error
+            ? error.message
+            : "Unable to detect your location.",
+        );
+      } finally {
+        setLocatingPickup(false);
+      }
+    };
+
+    void detectPickupLocation();
+  }, [isAuthReady, isLoggedIn, pickupAddress]);
 
   useEffect(() => {
     const refreshPrice = async () => {
@@ -514,9 +606,49 @@ export default function OrderPage() {
               PICKUP ADDRESS
             </p>
           </div>
+          {pickupLocation && (
+            <div className="mb-4">
+              <MapView
+                latitude={pickupLocation.latitude}
+                longitude={pickupLocation.longitude}
+                label="Pickup location"
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                Pickup detected from your current location.
+              </p>
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => {
+                setPickupAddress("");
+                setPickupLocation(null);
+              }}
+              disabled={locatingPickup}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#1D6076] px-3.5 py-2 text-sm font-medium text-white transition-all hover:bg-[#2a7a94] disabled:opacity-70"
+            >
+              {locatingPickup ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" strokeWidth={2} />
+                  Detecting location...
+                </>
+              ) : (
+                <>
+                  <MapPin size={15} strokeWidth={2} />
+                  Use my current location
+                </>
+              )}
+            </button>
+            {pickupLocation && (
+              <span className="text-xs text-emerald-600">
+                Current coordinates connected to your pickup point.
+              </span>
+            )}
+          </div>
           <input
             type="text"
-            placeholder="Enter your pickup address..."
+            placeholder="Your pickup address will be filled from your location..."
             value={pickupAddress}
             onChange={(event) => {
               setPickupAddress(event.target.value);
@@ -532,6 +664,12 @@ export default function OrderPage() {
             <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
               <AlertCircle size={12} />
               {errors.pickup}
+            </p>
+          )}
+          {locationError && (
+            <p className="text-amber-600 text-xs mt-2 flex items-center gap-1">
+              <AlertCircle size={12} />
+              {locationError}
             </p>
           )}
 
