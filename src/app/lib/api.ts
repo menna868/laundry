@@ -186,6 +186,12 @@ export interface MessageResponse {
   message: string;
 }
 
+export interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+  createdAt?: string;
+}
+
 export const categoryLabels: Record<string, string> = {
   wash: "Wash & Fold",
   iron: "Ironing",
@@ -849,5 +855,43 @@ export async function changePasswordRequest(
     },
     token,
   );
+}
+
+export async function sendChatMessageRequest(
+  token: string,
+  payload: {
+    message: string;
+    history: ChatMessage[];
+  },
+) {
+  const response = await fetch(`${BACKEND_PROXY_BASE}/chat`, {
+    method: "POST",
+    headers: {
+      accept: "text/event-stream",
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      message: payload.message,
+      history: payload.history.map((entry) => ({
+        role: entry.role,
+        content: entry.content,
+        createdAt: entry.createdAt,
+      })),
+    }),
+    cache: "no-store",
+  });
+
+  if (!response.ok || !response.body) {
+    const text = await response.text();
+    const data = text ? safeJsonParse(text) : null;
+    throw new ApiError(
+      getErrorMessage(data, `Request failed with status ${response.status}.`),
+      response.status,
+      data,
+    );
+  }
+
+  return response.body;
 }
 

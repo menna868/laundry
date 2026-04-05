@@ -30,6 +30,7 @@ import { useAuth } from "../context/AuthContext";
 import { MapView } from "@/app/components/MapView";
 
 const dates = ["Today", "Tomorrow", "Day After"];
+const POST_LOGIN_REDIRECT_KEY = "nadeef_post_login_redirect";
 const timeSlots = [
   "08:00 - 10:00",
   "10:00 - 12:00",
@@ -153,9 +154,15 @@ export default function OrderPage() {
       if (selectedServiceIds.length > 0) {
         params.set("services", selectedServiceIds.join(","));
       }
-      const from = encodeURIComponent(
-        `/order/${laundryId}${params.toString() ? `?${params.toString()}` : ""}`,
-      );
+      const destination = `/order/${laundryId}${
+        params.toString() ? `?${params.toString()}` : ""
+      }`;
+      const from = encodeURIComponent(destination);
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(POST_LOGIN_REDIRECT_KEY, destination);
+      }
+
       router.replace(`/login?from=${from}`);
     }
   }, [isAuthReady, isLoggedIn, laundryId, router, selectedServiceIds]);

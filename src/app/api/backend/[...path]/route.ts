@@ -37,9 +37,29 @@ async function proxyRequest(
       cache: "no-store",
     });
 
-    const responseBody = await response.text();
     const responseHeaders = new Headers();
     const responseContentType = response.headers.get("content-type");
+    const responseCacheControl = response.headers.get("cache-control");
+    const responseBuffering = response.headers.get("x-accel-buffering");
+
+    if ((responseContentType ?? "").includes("text/event-stream")) {
+      if (responseContentType) {
+        responseHeaders.set("content-type", responseContentType);
+      }
+      if (responseCacheControl) {
+        responseHeaders.set("cache-control", responseCacheControl);
+      }
+      if (responseBuffering) {
+        responseHeaders.set("x-accel-buffering", responseBuffering);
+      }
+
+      return new NextResponse(response.body, {
+        status: response.status,
+        headers: responseHeaders,
+      });
+    }
+
+    const responseBody = await response.text();
 
     if ((responseContentType ?? "").includes("text/html")) {
       return NextResponse.json(
@@ -55,6 +75,9 @@ async function proxyRequest(
 
     if (responseContentType) {
       responseHeaders.set("content-type", responseContentType);
+    }
+    if (responseCacheControl) {
+      responseHeaders.set("cache-control", responseCacheControl);
     }
 
     return new NextResponse(responseBody, {

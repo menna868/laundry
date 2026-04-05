@@ -86,7 +86,9 @@ function ErrorScreen({
         <Icon size={34} className="text-red-400" strokeWidth={1.5} />
       </div>
       <h2 className="text-xl text-gray-900 mb-3">{title}</h2>
-      <p className="text-gray-500 text-sm leading-relaxed mb-7 max-w-xs">{body}</p>
+      <p className="text-gray-500 text-sm leading-relaxed mb-7 max-w-xs">
+        {body}
+      </p>
       <button
         onClick={onRetry}
         className="flex items-center gap-2 bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#1D6076]/90 active:scale-[0.98] transition-all"
@@ -160,7 +162,9 @@ function ServiceRow({
         <ChevronRight
           size={16}
           className={`transition-colors ${
-            selected ? "text-[#1D6076]" : "text-gray-300 group-hover:text-[#1D6076]"
+            selected
+              ? "text-[#1D6076]"
+              : "text-gray-300 group-hover:text-[#1D6076]"
           }`}
           strokeWidth={2}
         />
@@ -191,7 +195,9 @@ export default function LaundryDetails() {
           return;
         }
 
-        if (mapped.services.filter((service) => service.available).length === 0) {
+        if (
+          mapped.services.filter((service) => service.available).length === 0
+        ) {
           setLaundry(mapped);
           setFlowState("no_services");
           return;
@@ -272,24 +278,29 @@ export default function LaundryDetails() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5]" dir="ltr">
-      <div className="sticky top-16 z-20 bg-white border-b border-gray-100 px-4 md:px-8 py-4 flex items-center gap-3 shadow-sm">
-        <button
-          onClick={() => router.back()}
-          className="p-2 -ml-1 rounded-xl hover:bg-gray-50 active:scale-95 transition-all"
-        >
-          <ArrowLeft size={22} className="text-gray-800" strokeWidth={2} />
-        </button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-gray-900 text-lg truncate">
-            {laundry ? laundry.name : "Laundry Details"}
-          </h1>
-          {flowState === "success" && (
-            <p className="text-xs text-gray-400 mt-0.5">
-              {laundry?.services.filter((service) => service.available).length} services
-              available
-            </p>
-          )}
+    <div className="min-h-screen overflow-x-clip bg-[#f5f5f5]" dir="ltr">
+      <div className="sticky top-16 z-20 border-b border-gray-100 bg-white px-4 py-4 shadow-sm md:px-8">
+        <div className="mx-auto flex max-w-6xl items-center gap-3">
+          <button
+            onClick={() => router.back()}
+            className="p-2 -ml-1 rounded-xl hover:bg-gray-50 active:scale-95 transition-all"
+          >
+            <ArrowLeft size={22} className="text-gray-800" strokeWidth={2} />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-gray-900 text-lg truncate">
+              {laundry ? laundry.name : "Laundry Details"}
+            </h1>
+            {flowState === "success" && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                {
+                  laundry?.services.filter((service) => service.available)
+                    .length
+                }{" "}
+                services available
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -306,7 +317,10 @@ export default function LaundryDetails() {
         <ErrorScreen type="not_found" onRetry={() => router.refresh()} />
       )}
       {flowState === "unavailable" && (
-        <ErrorScreen type="unavailable" onRetry={() => router.push("/nearby")} />
+        <ErrorScreen
+          type="unavailable"
+          onRetry={() => router.push("/nearby")}
+        />
       )}
       {flowState === "no_services" && (
         <ErrorScreen type="no_services" onRetry={() => router.refresh()} />
@@ -314,13 +328,13 @@ export default function LaundryDetails() {
 
       {flowState === "success" && laundry && (
         <div className="pb-10">
-          <div className="relative h-56">
+          <div className="relative aspect-16/10 overflow-hidden">
             <img
               src={laundry.image}
               alt={laundry.name}
-              className="w-full h-full object-cover"
+              className="h-full w-full object-cover object-center"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent" />
           </div>
 
           <div className="bg-white rounded-t-3xl -mt-6 relative z-10 shadow-sm px-5 pt-5 pb-4">
@@ -340,7 +354,9 @@ export default function LaundryDetails() {
                 <span className="text-sm font-medium text-gray-900">
                   {laundry.rating.toFixed(1)}
                 </span>
-                <span className="text-xs text-gray-500">({laundry.reviews})</span>
+                <span className="text-xs text-gray-500">
+                  ({laundry.reviews})
+                </span>
               </div>
               <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-xl">
                 <Clock size={13} className="text-[#1D6076]" strokeWidth={2} />

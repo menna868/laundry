@@ -1,33 +1,52 @@
-import { StaticImageData } from 'next/image';
-import React, { useState } from 'react'
+import { StaticImageData } from "next/image";
+import React, { useState } from "react";
 
 const ERROR_IMG_SRC =
-  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg=='
+  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg==";
 
-export interface ImageWithFallbackProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> {
+export interface ImageWithFallbackProps extends Omit<
+  React.ImgHTMLAttributes<HTMLImageElement>,
+  "src"
+> {
   src?: string | StaticImageData;
 }
 
 export function ImageWithFallback(props: ImageWithFallbackProps) {
-  const [didError, setDidError] = useState(false)
+  const [didError, setDidError] = useState(false);
 
   const handleError = () => {
-    setDidError(true)
-  }
+    setDidError(true);
+  };
 
-  const { src, alt, style, className, ...rest } = props
-  const actualSrc = typeof src === 'string' ? src : src?.src
+  const { src, alt, style, className, ...rest } = props;
+  const actualSrc = typeof src === "string" ? src : src?.src;
+  const mergedClassName = ["block max-w-full", className ?? ""]
+    .filter(Boolean)
+    .join(" ");
 
   return didError ? (
     <div
-      className={`inline-block bg-gray-100 text-center align-middle ${className ?? ''}`}
+      className={`overflow-hidden bg-gray-100 text-center align-middle ${className ?? ""}`}
       style={style}
     >
       <div className="flex items-center justify-center w-full h-full">
-        <img src={ERROR_IMG_SRC} alt="Error loading image" {...rest} data-original-url={actualSrc} />
+        <img
+          src={ERROR_IMG_SRC}
+          alt="Error loading image"
+          className="w-full h-full object-cover"
+          {...rest}
+          data-original-url={actualSrc}
+        />
       </div>
     </div>
   ) : (
-    <img src={actualSrc} alt={alt} className={className} style={style} {...rest} onError={handleError} />
-  )
+    <img
+      src={actualSrc}
+      alt={alt}
+      className={mergedClassName}
+      style={style}
+      {...rest}
+      onError={handleError}
+    />
+  );
 }

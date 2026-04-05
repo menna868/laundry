@@ -174,7 +174,13 @@ function ErrorScreen({
   );
 }
 
-function LaundryCard({ laundry, index }: { laundry: UiLaundry; index: number }) {
+function LaundryCard({
+  laundry,
+  index,
+}: {
+  laundry: UiLaundry;
+  index: number;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 28, scale: 0.96 }}
@@ -187,24 +193,26 @@ function LaundryCard({ laundry, index }: { laundry: UiLaundry; index: number }) 
     >
       <Link
         href={`/laundry/${laundry.id}`}
-        className="block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 active:scale-[0.99] transition-all duration-200"
+        className="block overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-200 active:scale-[0.99]"
       >
         <motion.div
-          className="relative h-44 overflow-hidden"
+          className="relative aspect-4/3 overflow-hidden"
           whileHover={{ scale: 1.02 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
           <motion.img
             src={laundry.image}
             alt={laundry.name}
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover object-center"
             whileHover={{ scale: 1.06 }}
             transition={{ duration: 0.4 }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent" />
           {!laundry.isAvailable && (
             <div className="absolute top-3 left-3 bg-gray-800/80 text-white text-xs px-3 py-1 rounded-full">
-              {laundry.availability === "Busy" ? "Currently Busy" : "Currently Closed"}
+              {laundry.availability === "Busy"
+                ? "Currently Busy"
+                : "Currently Closed"}
             </div>
           )}
           {laundry.isAvailable && laundry.rating >= 4.5 && (
@@ -302,8 +310,13 @@ export default function NearbyLaundries() {
       );
 
       if (mapped.length === 0) {
-        const fallback = await getLaundriesRequest({ pageIndex: 1, pageSize: 50 });
-        mapped = fallback.data.map((item) => mapLaundryDtoToUiLaundry(item, coords));
+        const fallback = await getLaundriesRequest({
+          pageIndex: 1,
+          pageSize: 50,
+        });
+        mapped = fallback.data.map((item) =>
+          mapLaundryDtoToUiLaundry(item, coords),
+        );
       }
 
       if (mapped.length === 0) {
@@ -354,24 +367,22 @@ export default function NearbyLaundries() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] pb-16" dir="ltr">
-      <div className="bg-white px-4 md:px-8 py-4 border-b border-gray-100 sticky top-16 z-10 shadow-sm">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.back()}
-              className="p-2 -ml-1 rounded-xl hover:bg-gray-50 active:scale-95 transition-all"
-            >
-              <ArrowLeft size={22} className="text-gray-800" strokeWidth={2} />
-            </button>
-            <div className="flex-1">
-              <h1 className="text-gray-900 text-lg">Nearby Laundries</h1>
-              {flowState === "success" && (
-                <p className="text-gray-400 text-xs mt-0.5">
-                  {filteredLaundries.length} laundries available
-                </p>
-              )}
-            </div>
+    <div className="min-h-screen overflow-x-clip bg-[#f5f5f5] pb-16" dir="ltr">
+      <div className="sticky top-16 z-10 border-b border-gray-100 bg-white px-4 py-4 shadow-sm md:px-8">
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
+          <button
+            onClick={() => router.back()}
+            className="p-2 -ml-1 rounded-xl hover:bg-gray-50 active:scale-95 transition-all"
+          >
+            <ArrowLeft size={22} className="text-gray-800" strokeWidth={2} />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-gray-900 text-lg">Nearby Laundries</h1>
+            {flowState === "success" && (
+              <p className="text-gray-400 text-xs mt-0.5">
+                {filteredLaundries.length} laundries available
+              </p>
+            )}
           </div>
         </div>
       </div>

@@ -26,7 +26,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { isLoggedIn, isAuthReady } = useAuth();
   const hasHandledDevLandingRef = useRef(false);
-  const authPaths = ["/login", "/signup", "/forgot-password", "/reset-password"];
+  const authPaths = [
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+  ];
   const isAuthPage = authPaths.includes(pathname);
 
   useEffect(() => {
@@ -54,7 +59,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
+    <div className="relative min-h-screen overflow-hidden bg-transparent">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-32 right-[-8rem] h-80 w-80 rounded-full bg-[#1D6076]/8 blur-3xl" />
+        <div className="absolute top-40 left-[-6rem] h-72 w-72 rounded-full bg-[#EBA050]/10 blur-3xl" />
+      </div>
       <TopNav />
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
@@ -63,6 +72,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           initial="initial"
           animate="animate"
           exit="exit"
+          className="relative"
         >
           {children}
         </motion.div>

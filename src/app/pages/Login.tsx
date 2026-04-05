@@ -18,6 +18,35 @@ import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 import sideImg from "../../assets/c3cadfc0d53d76910fffbccca80883d33cdb8d15.png";
 
 const SIDE_IMG = sideImg;
+const POST_LOGIN_REDIRECT_KEY = "nadeef_post_login_redirect";
+const ADMIN_DASHBOARD_URL =
+  process.env.NEXT_PUBLIC_ADMIN_DASHBOARD_URL?.replace(/\/+$/, "") ||
+  "http://localhost:3002";
+const ADMIN_API_BASE_URL =
+  process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL?.replace(/\/+$/, "") || "";
+
+function getAdminRedirectUrl(user: { id?: string; name?: string; email?: string; phone?: string; role?: string; token?: string | null }) {
+  const targetPath = user.role === "LaundryAdmin" ? "/laundry-admin" : "/admin";
+  const adminBaseUrl = ADMIN_DASHBOARD_URL.startsWith("http")
+    ? ADMIN_DASHBOARD_URL
+    : "http://localhost:3002";
+  const adminUrl = new URL(targetPath, adminBaseUrl);
+
+  if (user.id) adminUrl.searchParams.set("id", user.id);
+  if (user.name) adminUrl.searchParams.set("name", user.name);
+  if (user.email) adminUrl.searchParams.set("email", user.email);
+  if (user.phone) adminUrl.searchParams.set("phoneNumber", user.phone);
+  if (user.role) adminUrl.searchParams.set("role", user.role);
+  if (user.token) adminUrl.searchParams.set("token", user.token);
+  adminUrl.searchParams.set("redirectTo", targetPath);
+  if (ADMIN_API_BASE_URL) adminUrl.searchParams.set("apiBaseUrl", ADMIN_API_BASE_URL);
+
+  return adminUrl.toString();
+}
+
+function isAdminRole(role?: string) {
+  return role === "SuperAdmin" || role === "LaundryAdmin";
+}
 
 export default function Login() {
   const router = useRouter();
@@ -41,6 +70,21 @@ export default function Login() {
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const getRedirectTarget = () => {
+    if (typeof window === "undefined") {
+      return from;
+    }
+
+    const stored = window.localStorage.getItem(POST_LOGIN_REDIRECT_KEY);
+    const target = from !== "/" ? from : stored || from;
+
+    if (stored) {
+      window.localStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
+    }
+
+    return target;
+  };
+
   const validate = () => {
     const e: Record<string, string> = {};
     if (!email.trim()) e.email = "Email is required";
@@ -57,8 +101,17 @@ export default function Login() {
     setLoading(true);
     const result = await login(email, password);
     setLoading(false);
-    if (result.ok) router.replace(from);
-    else setError(result.message ?? "Invalid email or password. Please try again.");
+    if (result.ok) {
+      if (isAdminRole(result.user?.role)) {
+        window.location.href = getAdminRedirectUrl(result.user);
+        return;
+      }
+
+      router.replace(getRedirectTarget());
+      return;
+    }
+
+    setError(result.message ?? "Invalid email or password. Please try again.");
   };
 
   const handleSocial = async (provider: string, credential: string) => {
@@ -66,8 +119,17 @@ export default function Login() {
     setSocialLoad(provider);
     const result = await socialLogin(provider, credential);
     setSocialLoad("");
-    if (result.ok) router.replace(from);
-    else setError(result.message ?? "Social sign-in is not available right now.");
+    if (result.ok) {
+      if (isAdminRole(result.user?.role)) {
+        window.location.href = getAdminRedirectUrl(result.user);
+        return;
+      }
+
+      router.replace(getRedirectTarget());
+      return;
+    }
+
+    setError(result.message ?? "Social sign-in is not available right now.");
   };
 
   return (
