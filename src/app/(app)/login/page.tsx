@@ -1,3 +1,12 @@
-'use client';
+"use client";
 
-export { default } from '@/app/pages/Login';
+import { Suspense } from "react";
+import Login from "@/app/pages/Login";
+
+export default function Page() {
+  return (
+    <Suspense>
+      <Login />
+    </Suspense>
+  );
+}

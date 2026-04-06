@@ -19,6 +19,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   signup: (data: SignupData) => Promise<{ success: boolean; error?: string }>;
   verifyEmail: (email: string, otpCode: string) => Promise<{ ok: boolean; message?: string }>;
+  forgotPassword: (email: string) => Promise<{ ok: boolean; message?: string }>;
+  resetPassword: (email: string, otpCode: string, newPassword: string) => Promise<{ ok: boolean; message?: string }>;
   logout: () => void;
   socialLogin: (idToken: string) => Promise<boolean>;
 }
@@ -160,8 +162,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('nadeef_session');
   };
 
+  const forgotPassword = async (email: string) => {
+    try {
+      const { forgotPasswordApi } = await import('../services/api');
+      const res = await forgotPasswordApi(email);
+      if (res.isSuccess) {
+        return { ok: true, message: res.data };
+      }
+      return { ok: false, message: res.error };
+    } catch (err: any) {
+      return { ok: false, message: err.message || 'Network error' };
+    }
+  };
+
+  const resetPassword = async (email: string, otpCode: string, newPassword: string) => {
+    try {
+      const { resetPasswordApi } = await import('../services/api');
+      const res = await resetPasswordApi(email, otpCode, newPassword);
+      if (res.isSuccess) {
+        return { ok: true, message: res.data };
+      }
+      return { ok: false, message: res.error };
+    } catch (err: any) {
+      return { ok: false, message: err.message || 'Network error' };
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, login, signup, verifyEmail, logout, socialLogin }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, login, signup, verifyEmail, forgotPassword, resetPassword, logout, socialLogin }}>
       {children}
     </AuthContext.Provider>
   );

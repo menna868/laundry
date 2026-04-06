@@ -142,6 +142,36 @@ export async function verifyOtp(
   return { isSuccess: true, data: json.data ?? json };
 }
 
+/** POST /api/auth/forgot-password */
+export async function forgotPasswordApi(email: string): Promise<ApiResult<string>> {
+  const res = await fetch(`${BASE_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  const json = await res.json();
+  if (!res.ok || json.isSuccess === false) {
+    return { isSuccess: false, error: json.error ?? json.message ?? json.Message ?? "Failed to request code" };
+  }
+  return { isSuccess: true, data: json.message ?? json.Message ?? "OTP sent successfully" };
+}
+
+/** POST /api/auth/reset-password */
+export async function resetPasswordApi(email: string, otpCode: string, newPassword: string): Promise<ApiResult<string>> {
+  const res = await fetch(`${BASE_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, otpCode, newPassword }),
+  });
+
+  const json = await res.json();
+  if (!res.ok || json.isSuccess === false) {
+    return { isSuccess: false, error: json.error ?? json.message ?? json.Message ?? "Failed to reset password" };
+  }
+  return { isSuccess: true, data: json.message ?? json.Message ?? "Password reset successfully" };
+}
+
 // ── Orders ────────────────────────────────────────────────────────────────────
 
 export interface BackendOrderDto {

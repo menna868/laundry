@@ -1,3 +1,12 @@
-'use client';
+"use client";
 
-export { default } from '@/app/pages/PaymentCallback';
+import { Suspense } from "react";
+import PaymentCallback from "@/app/pages/PaymentCallback";
+
+export default function Page() {
+  return (
+    <Suspense>
+      <PaymentCallback />
+    </Suspense>
+  );
+}
