@@ -1,38 +1,26 @@
-"use client";
+"use client"
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { emailLogin, googleLogin, register } from '../services/api';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import {
-  ApiError,
-  AuthResult,
-  AuthUser,
-  forgotPasswordRequest,
-  googleLoginRequest,
-  loginRequest,
-  mapTokenToAuthUser,
-  mapUserDtoToAuthUser,
-  registerRequest,
-  resetPasswordRequest,
-  verifyEmailRequest,
-} from "@/app/lib/api";
-
-const STORAGE_KEY = "nadeef_user";
-export type User = AuthUser;
+export interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address?: string;
+  role?: string;
+  token?: string;
+}
 
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  isAuthReady: boolean;
-  login: (email: string, password: string) => Promise<AuthResult>;
-  signup: (data: SignupData) => Promise<AuthResult>;
-  verifyEmail: (email: string, otpCode: string) => Promise<AuthResult>;
-  forgotPassword: (email: string) => Promise<AuthResult>;
-  resetPassword: (
-    email: string,
-    otpCode: string,
-    newPassword: string,
-  ) => Promise<AuthResult>;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (data: SignupData) => Promise<{ success: boolean; error?: string }>;
+  verifyEmail: (email: string, otpCode: string) => Promise<{ ok: boolean; message?: string }>;
   logout: () => void;
-  socialLogin: (provider: string, credential?: string) => Promise<AuthResult>;
+  socialLogin: (idToken: string) => Promise<boolean>;
 }
 
 export interface SignupData {
@@ -41,291 +29,139 @@ export interface SignupData {
   email: string;
   phone: string;
   password: string;
-  address?: string;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-function normalizeFieldErrors(data: unknown) {
-  if (!data || typeof data !== "object") return undefined;
-
-  const record = data as Record<string, unknown>;
-  const errors = record.errors;
-  if (!errors || typeof errors !== "object") return undefined;
-
-  const normalized: Record<string, string> = {};
-
-  for (const [key, value] of Object.entries(errors as Record<string, unknown>)) {
-    if (Array.isArray(value) && typeof value[0] === "string") {
-      normalized[key.toLowerCase()] = value[0];
-    } else if (typeof value === "string") {
-      normalized[key.toLowerCase()] = value;
-    }
-  }
-
-  return Object.keys(normalized).length > 0 ? normalized : undefined;
-}
-
-function readStoredUser() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-
-  try {
-    return JSON.parse(raw) as User;
-  } catch {
-    localStorage.removeItem(STORAGE_KEY);
-    return null;
-  }
-}
-
-function persistUser(user: User | null) {
-  if (!user) {
-    localStorage.removeItem(STORAGE_KEY);
-    return;
-  }
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-}
-
-function toAuthError(error: unknown): AuthResult {
-  if (error instanceof ApiError) {
-    const message =
-      error.message === "Invalid Password."
-        ? "Password is wrong."
-        : error.message;
-
-    return {
-      ok: false,
-      message,
-      fieldErrors: normalizeFieldErrors(error.data),
-    };
-  }
-
-  return { ok: false, message: "Something went wrong. Please try again." };
-}
-
-function getEmailPrefix(email: string) {
-  return (
-    email
-    .split("@")[0]
-    .split(/[._-]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))[0] || "Customer"
-  );
-}
-
-function parseJwtPayload(token: string) {
-  try {
-    const [, payload] = token.split(".");
-    if (!payload) return null;
-
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized.padEnd(
-      normalized.length + ((4 - (normalized.length % 4)) % 4),
-      "=",
-    );
-
-    return JSON.parse(atob(padded)) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-function enrichGoogleUser(user: User, credential?: string): User {
-  const payload = credential ? parseJwtPayload(credential) : null;
-  const emailFromToken =
-    typeof payload?.email === "string" ? payload.email : undefined;
-  const email = user.email || emailFromToken || "";
-  const derivedFirstName = email ? getEmailPrefix(email) : "Google";
-
-  return {
-    ...user,
-    email,
-    firstName: user.firstName?.trim() || derivedFirstName,
-    lastName: user.lastName?.trim() || "User",
-    name:
-      user.name?.trim() ||
-      `${user.firstName?.trim() || derivedFirstName} ${user.lastName?.trim() || "User"}`.trim(),
-  };
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    setUser(readStoredUser());
-    setIsAuthReady(true);
+    const raw = localStorage.getItem('nadeef_user');
+    if (raw) {
+      try { setUser(JSON.parse(raw)); } catch { /* noop */ }
+    }
   }, []);
 
-  const login = async (email: string, password: string): Promise<AuthResult> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await loginRequest(email, password);
-      const nextUser = mapUserDtoToAuthUser(response);
-
-      setUser(nextUser);
-      persistUser(nextUser);
-
-      return { ok: true, user: nextUser };
-    } catch (error) {
-      setUser(null);
-      persistUser(null);
-      return toAuthError(error);
+      const res = await emailLogin(email, password) as any;
+      if (res.isSuccess && res.data) {
+        const u = res.data;
+        const loggedIn: User = {
+          id: u.id || u.Id,
+          firstName: u.name?.split(' ')[0] || u.Name?.split(' ')[0] || '',
+          lastName: u.name?.split(' ').slice(1).join(' ') || u.Name?.split(' ').slice(1).join(' ') || '',
+          email: u.email || u.Email,
+          phone: u.phoneNumber || u.PhoneNumber || '',
+          role: u.role || u.Role || 'Customer',
+          token: u.token || u.Token
+        };
+        setUser(loggedIn);
+        localStorage.setItem('nadeef_session', JSON.stringify({ token: loggedIn.token }));
+        localStorage.setItem('nadeef_user', JSON.stringify(loggedIn));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error(err);
+      return false;
     }
   };
 
-  const signup = async (data: SignupData): Promise<AuthResult> => {
+  const signup = async (data: SignupData): Promise<{success: boolean, error?: string}> => {
     try {
-      const response = await registerRequest({
-        name: `${data.firstName} ${data.lastName}`.trim(),
+      const res = await register({
+        name: `${data.firstName} ${data.lastName}`,
         email: data.email,
         password: data.password,
-        phoneNumber: data.phone,
-        role: "Customer",
-      });
+        phoneNumber: data.phone
+      }) as any;
 
-      if (response.token) {
-        const nextUser = mapUserDtoToAuthUser(response);
-        setUser(nextUser);
-        persistUser(nextUser);
-        return { ok: true, user: nextUser };
+      if (res.isSuccess) {
+        // User is created but must verify email. Don't set token or log them in.
+        return { success: true };
       }
-
-      return {
-        ok: true,
-        requiresVerification: true,
-        email: response.email,
-        message: "We sent a verification code to your email.",
-      };
-    } catch (error) {
-      return toAuthError(error);
+      return { success: false, error: res.error || 'Signup failed' };
+    } catch (err: any) {
+      console.error(err);
+      return { success: false, error: err.message || 'Signup failed' };
     }
   };
 
-  const verifyEmail = async (
-    email: string,
-    otpCode: string,
-  ): Promise<AuthResult> => {
+  const verifyEmail = async (email: string, otpCode: string): Promise<{ ok: boolean; message?: string }> => {
     try {
-      const response = await verifyEmailRequest(email, otpCode);
-      const nextUser = mapTokenToAuthUser(response.token, { email });
+      const { verifyOtp } = await import('../services/api');
+      const res = await verifyOtp(email, otpCode);
+      if (res.isSuccess && res.data) {
+        const tokenObj: any = res.data;
+        const actualToken = typeof tokenObj === 'string' ? tokenObj : (tokenObj.token || tokenObj.Token);
 
-      setUser(nextUser);
-      persistUser(nextUser);
+        if (!actualToken) {
+          return { ok: false, message: 'No token received from verification' };
+        }
 
-      return { ok: true, user: nextUser };
-    } catch (error) {
-      return toAuthError(error);
-    }
-  };
+        // Decode JWT to set user session
+        let payload: any = {};
+        try {
+          payload = JSON.parse(atob(actualToken.split('.')[1]));
+        } catch { }
 
-  const socialLogin = async (
-    provider: string,
-    credential?: string,
-  ): Promise<AuthResult> => {
-    if (provider !== "google") {
-      return {
-        ok: false,
-        message: `${provider} sign-in is not supported in this frontend.`,
-      };
-    }
-
-    if (!credential) {
-      return {
-        ok: false,
-        message: "Google sign-in did not return a valid credential.",
-      };
-    }
-
-    try {
-      const response = await googleLoginRequest(credential);
-      const nextUser = enrichGoogleUser(mapUserDtoToAuthUser(response), credential);
-
-      setUser(nextUser);
-      persistUser(nextUser);
-
-      return { ok: true, user: nextUser };
-    } catch (error) {
-      setUser(null);
-      persistUser(null);
-      return toAuthError(error);
-    }
-  };
-
-  const forgotPassword = async (email: string): Promise<AuthResult> => {
-    try {
-      const response = await forgotPasswordRequest(email);
-      return {
-        ok: true,
-        email,
-        message: response.message,
-      };
-    } catch (error) {
-      return toAuthError(error);
-    }
-  };
-
-  const resetPassword = async (
-    email: string,
-    otpCode: string,
-    newPassword: string,
-  ): Promise<AuthResult> => {
-    try {
-      await resetPasswordRequest({
-        email,
-        otpCode,
-        newPassword,
-      });
-
-      try {
-        // Verify the backend actually accepts the new password before we
-        // tell the UI the reset succeeded.
-        await loginRequest(email, newPassword);
-      } catch {
-        setUser(null);
-        persistUser(null);
-        return {
-          ok: false,
-          message:
-            "The backend reported success, but it still rejected the new password. Please request a new OTP and try again.",
+        const userName = payload.Name || payload.name || 'User';
+        const loggedIn: User = {
+          id: payload.uid || payload.nameid || '',
+          firstName: userName.split(' ')[0] || '',
+          lastName: userName.split(' ').slice(1).join(' ') || '',
+          email: payload.email || email,
+          phone: '',
+          role: payload.role || 'Customer',
+          token: actualToken
         };
+        setUser(loggedIn);
+        localStorage.setItem('nadeef_session', JSON.stringify({ token: loggedIn.token }));
+        localStorage.setItem('nadeef_user', JSON.stringify(loggedIn));
+        return { ok: true };
       }
+      return { ok: false, message: res.error || 'Verification failed' };
+    } catch (err: any) {
+      return { ok: false, message: err.message || 'Network error' };
+    }
+  };
 
-      // Force a fresh sign-in after password reset so stale local auth
-      // state cannot make it look like the old password still works.
-      setUser(null);
-      persistUser(null);
-
-      return {
-        ok: true,
-        email,
-        message: "Password has been reset successfully.",
-      };
-    } catch (error) {
-      return toAuthError(error);
+  const socialLogin = async (idToken: string): Promise<boolean> => {
+    try {
+      const res = await googleLogin(idToken) as any;
+      if (res.isSuccess && res.data) {
+        const u = res.data;
+        const loggedIn: User = {
+          id: u.id || u.Id,
+          firstName: u.name?.split(' ')[0] || u.Name?.split(' ')[0] || '',
+          lastName: u.name?.split(' ').slice(1).join(' ') || u.Name?.split(' ').slice(1).join(' ') || '',
+          email: u.email || u.Email,
+          phone: u.phoneNumber || u.PhoneNumber || '',
+          role: u.role || u.Role || 'Customer',
+          token: u.token || u.Token
+        };
+        setUser(loggedIn);
+        localStorage.setItem('nadeef_session', JSON.stringify({ token: loggedIn.token }));
+        localStorage.setItem('nadeef_user', JSON.stringify(loggedIn));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Social login error:', err);
+      return false;
     }
   };
 
   const logout = () => {
     setUser(null);
-    persistUser(null);
+    localStorage.removeItem('nadeef_user');
+    localStorage.removeItem('nadeef_session');
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoggedIn: !!user,
-        isAuthReady,
-        login,
-        signup,
-        verifyEmail,
-        forgotPassword,
-        resetPassword,
-        logout,
-        socialLogin,
-      }}
-    >
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, login, signup, verifyEmail, logout, socialLogin }}>
       {children}
     </AuthContext.Provider>
   );
@@ -333,6 +169,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
 }

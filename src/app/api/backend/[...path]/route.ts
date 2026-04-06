@@ -15,6 +15,8 @@ async function proxyRequest(
   const backendUrl = new URL(`/api/${backendPath}`, BACKEND_BASE_URL);
   backendUrl.search = request.nextUrl.search;
 
+  console.log(`[Proxy] ${request.method} ${backendUrl.toString()} (BACKEND_BASE_URL=${BACKEND_BASE_URL})`);
+
   try {
     const headers = new Headers();
     const authorization = request.headers.get("authorization");
@@ -37,11 +39,28 @@ async function proxyRequest(
       cache: "no-store",
     });
 
+    const responseContentType = response.headers.get("content-type") ?? "";
+
+    // If the backend is streaming SSE, pipe the body through as-is
+    if (
+      responseContentType.includes("text/event-stream") ||
+      accept?.includes("text/event-stream")
+    ) {
+      const responseHeaders = new Headers();
+      responseHeaders.set("content-type", "text/event-stream");
+      responseHeaders.set("cache-control", "no-cache");
+      responseHeaders.set("x-accel-buffering", "no");
+
+      return new NextResponse(response.body, {
+        status: response.status,
+        headers: responseHeaders,
+      });
+    }
+
     const responseBody = await response.text();
     const responseHeaders = new Headers();
-    const responseContentType = response.headers.get("content-type");
 
-    if ((responseContentType ?? "").includes("text/html")) {
+    if (responseContentType.includes("text/html")) {
       return NextResponse.json(
         {
           message:
@@ -62,6 +81,7 @@ async function proxyRequest(
       headers: responseHeaders,
     });
   } catch (error) {
+    console.error(`[Proxy] FAILED ${backendUrl.toString()}:`, error);
     return NextResponse.json(
       {
         message:

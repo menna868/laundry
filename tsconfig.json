@@ -45,7 +45,6 @@
   ],
   "exclude": [
     "node_modules",
-    "servers",
-    "vite.config.ts"
+    "servers"
   ]
 }

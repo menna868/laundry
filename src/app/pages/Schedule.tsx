@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { ArrowLeft, Truck, Calendar as CalendarIcon } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Schedule() {
+  const [selectedService, setSelectedService] = useState<'wash-fold' | 'dry-cleaning' | 'hang-dry' | null>('wash-fold');
+
   return (
     <div className="min-h-screen bg-white pb-40" dir="ltr">
       {/* Header */}

@@ -1,54 +1,9 @@
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, CreditCard, Lock } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { getWalletBalanceRequest, chargeWalletRequest, ApiError } from '../lib/api';
-import { toast } from 'sonner';
+import { useState } from 'react';
 
 export default function Billing() {
-  const { user } = useAuth();
-  const [balance, setBalance] = useState<number | null>(null);
-  const [loadingBalance, setLoadingBalance] = useState(true);
-  const [amount, setAmount] = useState('');
-  const [charging, setCharging] = useState(false);
-  const [showTopUp, setShowTopUp] = useState(false);
-
-  useEffect(() => {
-    const fetchBalance = async () => {
-      if (!user?.token) return;
-      try {
-        const data = await getWalletBalanceRequest(user.token);
-        setBalance(data.balance);
-      } catch (error) {
-        console.error("Failed to fetch balance:", error);
-      } finally {
-        setLoadingBalance(false);
-      }
-    };
-    fetchBalance();
-  }, [user?.token]);
-
-  const handleTopUp = async () => {
-    const numAmount = parseFloat(amount);
-    if (!user?.token || isNaN(numAmount) || numAmount <= 0) {
-      toast.error("Please enter a valid amount");
-      return;
-    }
-
-    try {
-      setCharging(true);
-      const response = await chargeWalletRequest(user.token, numAmount);
-      if (response.checkoutUrl) {
-        window.location.href = response.checkoutUrl;
-      } else {
-        toast.error("Failed to initiate payment");
-      }
-    } catch (error) {
-      toast.error(error instanceof ApiError ? error.message : "Something went wrong");
-    } finally {
-      setCharging(false);
-    }
-  };
+  const [showCardForm, setShowCardForm] = useState(false);
 
   return (
     <div className="min-h-screen bg-white" dir="ltr">
@@ -62,65 +17,111 @@ export default function Billing() {
       <div className="max-w-3xl mx-auto px-4 md:px-8 lg:px-12 py-6 md:py-8">
         <h1 className="text-2xl md:text-3xl text-gray-900 mb-8 md:mb-10">Billing</h1>
 
-        {/* Wallet Section */}
-        <div className="mb-10">
-          <h2 className="text-xs font-bold text-gray-900 tracking-wider mb-5 uppercase">My Wallet</h2>
-          <div className="bg-[#1D6076]/5 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border border-[#1D6076]/10">
-            <div>
-              <p className="text-gray-500 text-sm mb-1">Current Balance</p>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl md:text-4xl font-bold text-[#1D6076]">
-                  {loadingBalance ? "..." : (balance ?? 0).toFixed(2)}
-                </span>
-                <span className="text-sm font-medium text-gray-400">EGP</span>
-              </div>
-            </div>
-            
-            {!showTopUp ? (
-              <button 
-                onClick={() => setShowTopUp(true)}
-                className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-semibold hover:bg-[#2a7a94] transition-all"
-              >
-                Top Up Balance
-              </button>
-            ) : (
-              <div className="flex flex-col gap-3 w-full md:w-auto">
-                <div className="flex gap-2">
-                  <input 
-                    type="number"
-                    placeholder="Amount (EGP)"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="flex-1 md:w-32 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D6076] focus:border-transparent"
-                  />
-                  <button 
-                    onClick={handleTopUp}
-                    disabled={charging}
-                    className="bg-[#EBA050] text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#d4832a] transition-all disabled:opacity-50"
-                  >
-                    {charging ? "..." : "Charge"}
-                  </button>
-                </div>
-                <button 
-                  onClick={() => setShowTopUp(false)}
-                  className="text-gray-400 text-xs text-center hover:text-gray-600"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Saved Cards Section (Placeholder / Removed for Kashier simplify) */}
+        {/* Credit Card Section */}
         <div>
           <div className="flex items-center justify-between mb-4 md:mb-5">
-            <h2 className="text-xs font-bold text-gray-900 tracking-wider">SAVED CARDS</h2>
+            <h2 className="text-xs font-bold text-gray-900 tracking-wider">CREDIT CARD</h2>
+            {!showCardForm && (
+              <button 
+                onClick={() => setShowCardForm(true)}
+                className="text-[#1D6076] text-sm md:text-base font-medium border border-[#1D6076] px-4 py-2 md:px-6 md:py-2.5 rounded-lg hover:bg-[#1D6076]/5 transition-colors"
+              >
+                Add
+              </button>
+            )}
           </div>
-          <div className="border border-gray-200 rounded-2xl p-5 md:p-6 flex items-center gap-3">
-            <CreditCard size={20} className="text-gray-400 md:w-6 md:h-6" strokeWidth={2} />
-            <span className="text-gray-500 text-sm md:text-base">Card data is managed securely by Kashier</span>
-          </div>
+
+          {!showCardForm ? (
+            <div className="border border-gray-200 rounded-2xl p-5 md:p-6 flex items-center gap-3">
+              <CreditCard size={20} className="text-gray-400 md:w-6 md:h-6" strokeWidth={2} />
+              <span className="text-gray-500 text-sm md:text-base">No payment method selected</span>
+            </div>
+          ) : (
+            <div className="border border-gray-200 rounded-2xl p-5 md:p-8">
+              <h3 className="text-gray-900 text-base md:text-lg mb-6 md:mb-8">Card information</h3>
+
+              <div className="space-y-4 md:space-y-5">
+                {/* Card Number */}
+                <div>
+                  <label className="block text-sm md:text-base text-gray-700 mb-2">Card number</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="1234 5678 9012 3456"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 md:px-5 md:py-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#1D6076] focus:border-transparent"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" alt="Visa" className="h-4 md:h-5" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-4 md:h-5" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg" alt="Amex" className="h-4 md:h-5" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Discover_Card_logo.svg" alt="Discover" className="h-4 md:h-5" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* MM/YY and CVC */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm md:text-base text-gray-700 mb-2">MM / YY</label>
+                    <input
+                      type="text"
+                      placeholder="MM / YY"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 md:px-5 md:py-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#1D6076] focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm md:text-base text-gray-700 mb-2">CVC</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="CVC"
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 md:px-5 md:py-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#1D6076] focus:border-transparent"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <CreditCard size={16} className="text-gray-400 md:w-5 md:h-5" strokeWidth={2} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Billing Address */}
+                <div className="pt-4">
+                  <h4 className="text-gray-900 text-base md:text-lg mb-4 md:mb-5">Billing address</h4>
+                  
+                  <div className="space-y-4 md:space-y-5">
+                    <div>
+                      <label className="block text-sm md:text-base text-gray-700 mb-2">Country or region</label>
+                      <select className="w-full border border-gray-200 rounded-xl px-4 py-3 md:px-5 md:py-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#1D6076] focus:border-transparent appearance-none bg-white">
+                        <option>United States</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm md:text-base text-gray-700 mb-2">ZIP Code</label>
+                      <input
+                        type="text"
+                        placeholder="60016"
+                        defaultValue="60016"
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 md:px-5 md:py-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#1D6076] focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Terms */}
+                <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
+                  By providing your card information, you allow Rinse to charge your card for future
+                  payments in accordance with their terms.
+                </p>
+
+                {/* Submit Button */}
+                <button className="w-full bg-[#EBA050] text-white py-4 md:py-5 rounded-xl font-medium text-base md:text-lg flex items-center justify-center gap-2 hover:bg-[#EBA050]/90 transition-colors">
+                  Set up
+                  <Lock size={16} className="md:w-5 md:h-5" strokeWidth={2} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

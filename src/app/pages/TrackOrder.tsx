@@ -1,94 +1,73 @@
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import {
-  ArrowLeft,
-  AlertCircle,
-  Loader2,
-  MapPin,
-  Clock,
-  Package,
-  CheckCircle2,
-  XCircle,
-  Truck,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+  ArrowLeft, Star, AlertCircle, Loader2, MapPin,
+  Clock, Package, CheckCircle2, XCircle, Truck, ShieldCheck, Sparkles, Lock
+} from 'lucide-react';
 import {
-  ApiError,
-  BackendOrderTrackDto,
-  UiOrder,
-  cancelOrderRequest,
-  getOrderByIdRequest,
-  mapBackendStatusToUiStatus,
-  mapOrderDtoToUiOrder,
-  statusConfig,
-  statusOrder,
-  trackOrderRequest,
-  UiOrderStatus,
-} from "@/app/lib/api";
-import { useAuth } from "../context/AuthContext";
+  Order, getOrder, statusConfig, statusOrder, OrderStatus
+} from '../data/sampleOrders';
+import { useAuth } from '../context/AuthContext';
 
-type FlowState = "loading" | "invalid" | "not_found" | "success";
+// ── Flow states ───────────────────────────────────────────────────────────────
+type FlowState = 'loading' | 'invalid' | 'not_found' | 'access_denied' | 'success';
 
-const StatusIcon: Record<UiOrderStatus, React.ElementType> = {
+// ── Status icon map ───────────────────────────────────────────────────────────
+const StatusIcon: Record<OrderStatus, React.ElementType> = {
   pending_confirmation: Clock,
-  accepted: CheckCircle2,
-  washing: Sparkles,
-  ready_for_pickup: Package,
-  picked_up: Truck,
-  delivered: ShieldCheck,
-  cancelled: XCircle,
+  accepted:            CheckCircle2,
+  washing:             Sparkles,
+  ready_for_pickup:    Package,
+  picked_up:           Truck,
+  delivered:           ShieldCheck,
+  cancelled:           XCircle,
 };
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+  const m = Math.floor(diff / 60000);
+  if (m < 1)  return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+  return new Date(iso).toLocaleString('en-US', {
+    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   });
 }
 
+// ── Timeline step ─────────────────────────────────────────────────────────────
 function TimelineStep({
-  status,
-  currentStatus,
-  isLast,
+  status, currentStatus, isLast,
 }: {
-  status: UiOrderStatus;
-  currentStatus: UiOrderStatus;
+  status: OrderStatus;
+  currentStatus: OrderStatus;
   isLast: boolean;
 }) {
   const cfg = statusConfig[status];
   const Icon = StatusIcon[status];
   const currentIdx = statusOrder.indexOf(currentStatus);
-  const stepIdx = statusOrder.indexOf(status);
-  const isDone = stepIdx <= currentIdx && currentStatus !== "cancelled";
-  const isActive = status === currentStatus && currentStatus !== "cancelled";
+  const stepIdx    = statusOrder.indexOf(status);
+  const isDone     = stepIdx <= currentIdx && currentStatus !== 'cancelled';
+  const isActive   = status === currentStatus && currentStatus !== 'cancelled';
 
   return (
     <div className="flex gap-3">
+      {/* Dot + line */}
       <div className="flex flex-col items-center">
         <div
-          className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${isActive ? "ring-4 ring-offset-1" : ""}`}
+          className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${
+            isActive ? 'ring-4 ring-offset-1' : ''
+          }`}
           style={
             isDone || isActive
-              ? {
-                  backgroundColor: cfg.bg,
-                  color: cfg.color,
-                  ...(isActive ? { ringColor: `${cfg.color}30` } : {}),
-                }
-              : { backgroundColor: "#f3f4f6", color: "#9ca3af" }
+              ? { backgroundColor: cfg.bg, color: cfg.color, ...(isActive ? { ringColor: `${cfg.color}30` } : {}) }
+              : { backgroundColor: '#f3f4f6', color: '#9ca3af' }
           }
         >
           <Icon size={15} strokeWidth={2} />
@@ -96,18 +75,16 @@ function TimelineStep({
         {!isLast && (
           <div
             className="w-0.5 flex-1 mt-1 min-h-[28px]"
-            style={{
-              backgroundColor: isDone && !isActive ? cfg.color : "#e5e7eb",
-              opacity: isDone ? 0.35 : 1,
-            }}
+            style={{ backgroundColor: isDone && !isActive ? cfg.color : '#e5e7eb', opacity: isDone ? 0.35 : 1 }}
           />
         )}
       </div>
 
-      <div className="flex-1 pb-5">
+      {/* Content */}
+      <div className={`flex-1 pb-5 ${isLast ? '' : ''}`}>
         <p
           className="text-sm font-medium mb-0.5"
-          style={{ color: isDone || isActive ? cfg.color : "#9ca3af" }}
+          style={{ color: (isDone || isActive) ? cfg.color : '#9ca3af' }}
         >
           {cfg.label}
         </p>
@@ -119,86 +96,47 @@ function TimelineStep({
   );
 }
 
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function TrackOrder() {
-  const { id } = useParams<{ id: string }>();
+  const { id }  = useParams<{ id: string }>();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { user, isAuthReady, isLoggedIn } = useAuth();
+  const { user } = useAuth();
 
-  const [flowState, setFlowState] = useState<FlowState>("loading");
-  const [order, setOrder] = useState<UiOrder | null>(null);
-  const [track, setTrack] = useState<BackendOrderTrackDto | null>(null);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
+  const [flowState, setFlowState] = useState<FlowState>('loading');
+  const [order, setOrder]         = useState<Order | null>(null);
 
   useEffect(() => {
-    if (!isAuthReady) return;
-    if (!isLoggedIn) {
-      router.replace(`/login?from=${encodeURIComponent(`/track-order/${id}`)}`);
-    }
-  }, [id, isAuthReady, isLoggedIn, router]);
+    const run = async () => {
+      setFlowState('loading');
+      await new Promise(r => setTimeout(r, 900));
 
-  useEffect(() => {
-    const loadOrder = async () => {
-      if (!user?.token || !id) return;
-
-      try {
-        setFlowState("loading");
-        const [orderResponse, trackResponse] = await Promise.all([
-          getOrderByIdRequest(user.token, id),
-          trackOrderRequest(user.token, id),
-        ]);
-
-        setOrder(mapOrderDtoToUiOrder(orderResponse));
-        setTrack(trackResponse);
-        setFlowState("success");
-      } catch (error) {
-        if (error instanceof ApiError && error.status === 404) {
-          setFlowState("not_found");
-          return;
-        }
-
-        setFlowState("invalid");
+      // 1. Validate Order ID format
+      if (!id || id.trim().length < 1 || !/^\d+$/.test(id)) {
+        setFlowState('invalid');
+        return;
       }
+
+      // 2. Fetch order
+      const found = getOrder(id);
+      if (!found) { setFlowState('not_found'); return; }
+
+      // 3. Ownership check — if order has a userId, it must match logged-in user
+      if (found.userId && user && found.userId !== user.id) {
+        setFlowState('access_denied');
+        return;
+      }
+
+      setOrder(found);
+      setFlowState('success');
     };
+    run();
+  }, [id, user]);
 
-    if (isAuthReady && isLoggedIn) {
-      loadOrder();
-    }
-  }, [id, isAuthReady, isLoggedIn, user?.token]);
-
-  useEffect(() => {
-    if (searchParams.get("notice") === "placed") {
-      router.replace(`/track-order/${id}`);
-    }
-  }, [id, router, searchParams]);
-
-  const currentStatus = useMemo<UiOrderStatus>(() => {
-    if (track?.status) return mapBackendStatusToUiStatus(track.status);
-    return order?.status ?? "pending_confirmation";
-  }, [order?.status, track?.status]);
-
-  const cfg = statusConfig[currentStatus];
-  const canCancelOrder = order?.status === "pending_confirmation";
-
-  const handleCancelOrder = async () => {
-    if (!user?.token || !order) return;
-
-    try {
-      setIsCancelling(true);
-      await cancelOrderRequest(user.token, order.id);
-      setShowCancelModal(false);
-      router.push("/orders?notice=cancelled");
-    } catch {
-      setIsCancelling(false);
-      setShowCancelModal(false);
-    }
-  };
-
-  if (!isAuthReady || !isLoggedIn) return null;
+  const cfg = order ? statusConfig[order.status] : null;
 
   return (
     <div className="min-h-screen bg-[#f5f5f5]" dir="ltr">
+      {/* Header */}
       <div className="bg-white px-4 md:px-8 py-4 border-b border-gray-100 sticky top-16 z-20 shadow-sm">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
           <button
@@ -214,51 +152,61 @@ export default function TrackOrder() {
         </div>
       </div>
 
-      {flowState === "loading" && (
+      {/* Loading */}
+      {flowState === 'loading' && (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
           <Loader2 size={30} className="text-[#1D6076] animate-spin" strokeWidth={1.5} />
-          <p className="text-gray-400 text-sm">Fetching order...</p>
+          <p className="text-gray-400 text-sm">Fetching order…</p>
         </div>
       )}
 
-      {flowState === "invalid" && (
+      {/* Invalid request */}
+      {flowState === 'invalid' && (
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-8 text-center">
           <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-5">
             <AlertCircle size={34} className="text-red-400" strokeWidth={1.5} />
           </div>
           <h2 className="text-xl text-gray-900 mb-3">Invalid Request</h2>
-          <p className="text-gray-500 text-sm mb-7 max-w-xs">
-            We couldn&apos;t load this order from the backend.
-          </p>
-          <Link
-            href="/orders"
-            className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] transition-all"
-          >
+          <p className="text-gray-500 text-sm mb-7 max-w-xs">The order ID is not valid. Please check the link and try again.</p>
+          <Link href="/orders" className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] transition-all">
             My Orders
           </Link>
         </div>
       )}
 
-      {flowState === "not_found" && (
+      {/* Not found */}
+      {flowState === 'not_found' && (
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-8 text-center">
           <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-5">
             <AlertCircle size={34} className="text-red-400" strokeWidth={1.5} />
           </div>
           <h2 className="text-xl text-gray-900 mb-3">Order Not Found</h2>
-          <p className="text-gray-500 text-sm mb-7 max-w-xs">
-            We couldn&apos;t find this order for your current account.
-          </p>
-          <Link
-            href="/orders"
-            className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] transition-all"
-          >
+          <p className="text-gray-500 text-sm mb-7 max-w-xs">We couldn&apos;t find this order. It may have been removed or the link is outdated.</p>
+          <Link href="/orders" className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] transition-all">
             My Orders
           </Link>
         </div>
       )}
 
-      {flowState === "success" && order && (
+      {/* Access denied */}
+      {flowState === 'access_denied' && (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-8 text-center">
+          <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-5">
+            <Lock size={34} className="text-red-400" strokeWidth={1.5} />
+          </div>
+          <h2 className="text-xl text-gray-900 mb-3">Access Denied</h2>
+          <p className="text-gray-500 text-sm mb-7">You don&apos;t have permission to view this order. It belongs to a different account.</p>
+          <Link href="/orders" className="bg-[#1D6076] text-white px-8 py-3.5 rounded-2xl text-sm font-medium hover:bg-[#2a7a94] transition-all">
+            My Orders
+          </Link>
+        </div>
+      )}
+
+      {/* Success */}
+      {flowState === 'success' && order && cfg && (
         <div className="max-w-2xl mx-auto px-4 md:px-8 py-5 space-y-4 pb-10">
+
+          {/* Status hero card */}
           <div
             className="rounded-2xl p-5 shadow-sm border"
             style={{ backgroundColor: cfg.bg, borderColor: `${cfg.color}20` }}
@@ -268,29 +216,19 @@ export default function TrackOrder() {
                 className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
                 style={{ backgroundColor: `${cfg.color}20` }}
               >
-                {(() => {
-                  const Icon = StatusIcon[currentStatus];
-                  return <Icon size={22} style={{ color: cfg.color }} strokeWidth={1.8} />;
-                })()}
+                {(() => { const I = StatusIcon[order.status]; return <I size={22} style={{ color: cfg.color }} strokeWidth={1.8} />; })()}
               </div>
               <div className="flex-1">
-                <p
-                  className="text-xs font-semibold tracking-wider mb-1"
-                  style={{ color: cfg.color }}
-                >
+                <p className="text-xs font-semibold tracking-wider mb-1" style={{ color: cfg.color }}>
                   CURRENT STATUS
                 </p>
                 <h2 className="text-gray-900 text-lg">{cfg.label}</h2>
-                <p className="text-gray-500 text-xs mt-1 leading-relaxed">
-                  {cfg.description}
-                </p>
+                <p className="text-gray-500 text-xs mt-1 leading-relaxed">{cfg.description}</p>
               </div>
             </div>
 
-            <div
-              className="flex items-center gap-1.5 mt-4 pt-3 border-t"
-              style={{ borderColor: `${cfg.color}20` }}
-            >
+            {/* Last updated */}
+            <div className="flex items-center gap-1.5 mt-4 pt-3 border-t" style={{ borderColor: `${cfg.color}20` }}>
               <Clock size={12} style={{ color: cfg.color }} strokeWidth={2} />
               <p className="text-xs" style={{ color: cfg.color }}>
                 Last updated {timeAgo(order.updatedAt)} · {formatDate(order.updatedAt)}
@@ -298,32 +236,15 @@ export default function TrackOrder() {
             </div>
           </div>
 
+          {/* Order details */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-xs font-semibold text-gray-400 tracking-wider mb-4">
-              TRACKING TIMELINE
-            </p>
-            {([...statusOrder, "cancelled"] as UiOrderStatus[])
-              .filter((status) => status !== "cancelled" || currentStatus === "cancelled")
-              .map((status, index, list) => (
-                <TimelineStep
-                  key={status}
-                  status={status}
-                  currentStatus={currentStatus}
-                  isLast={index === list.length - 1}
-                />
-              ))}
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-xs font-semibold text-gray-400 tracking-wider mb-4">
-              ORDER DETAILS
-            </p>
+            <p className="text-xs font-semibold text-gray-400 tracking-wider mb-4">ORDER DETAILS</p>
             <div className="space-y-3">
               {[
-                { label: "Laundry", value: order.laundryName },
-                { label: "Service", value: order.serviceName },
-                { label: "Items", value: `${order.itemCount} ${order.serviceUnit}` },
-                { label: "Pickup", value: `${order.pickupDate}, ${order.pickupTime}` },
+                { label: 'Laundry',   value: order.laundryName },
+                { label: 'Service',   value: order.serviceName },
+                { label: 'Items',     value: `${order.itemCount} ${order.serviceUnit}` },
+                { label: 'Pickup',    value: `${order.pickupDate}, ${order.pickupTime}` },
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">{label}</span>
@@ -332,85 +253,99 @@ export default function TrackOrder() {
               ))}
               <div className="border-t border-gray-100 pt-3 flex justify-between">
                 <span className="text-sm text-gray-500">Total</span>
-                <span className="text-sm font-semibold text-[#1D6076]">
-                  {order.total} EGP
-                </span>
+                <span className="text-sm font-semibold text-[#1D6076]">{order.total} EGP</span>
               </div>
             </div>
           </div>
 
+          {/* Address */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-xs font-semibold text-gray-400 tracking-wider mb-3">
-              ADDRESSES
-            </p>
+            <p className="text-xs font-semibold text-gray-400 tracking-wider mb-3">ADDRESSES</p>
             <div className="space-y-3">
               <div className="flex items-start gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-[#EBA050]/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <MapPin size={14} className="text-[#EBA050]" strokeWidth={2} />
+                  <MapPin size={13} className="text-[#EBA050]" strokeWidth={2} />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Pickup Address</p>
-                  <p className="text-sm text-gray-800">{order.pickupAddress}</p>
+                  <p className="text-xs text-gray-400">Pickup</p>
+                  <p className="text-sm text-gray-900">{order.pickupAddress}</p>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-[#1D6076]/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <MapPin size={14} className="text-[#1D6076]" strokeWidth={2} />
+                  <MapPin size={13} className="text-[#1D6076]" strokeWidth={2} />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Delivery Address</p>
-                  <p className="text-sm text-gray-800">{order.deliveryAddress}</p>
+                  <p className="text-xs text-gray-400">Delivery</p>
+                  <p className="text-sm text-gray-900">{order.deliveryAddress}</p>
                 </div>
               </div>
-              {track?.laundryAddress && (
-                <div className="flex items-start gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0 mt-0.5">
-                    <Package size={14} className="text-emerald-600" strokeWidth={2} />
+            </div>
+          </div>
+
+          {/* Timeline */}
+          {order.status !== 'cancelled' && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <p className="text-xs font-semibold text-gray-400 tracking-wider mb-4">ORDER PROGRESS</p>
+              <div>
+                {statusOrder.map((s, i) => (
+                  <TimelineStep
+                    key={s}
+                    status={s}
+                    currentStatus={order.status}
+                    isLast={i === statusOrder.length - 1}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Cancelled */}
+          {order.status === 'cancelled' && (
+            <div className="bg-red-50 rounded-2xl border border-red-100 p-5 flex items-center gap-3">
+              <XCircle size={22} className="text-red-400 shrink-0" strokeWidth={1.5} />
+              <p className="text-sm text-red-700">This order has been cancelled.</p>
+            </div>
+          )}
+
+          {/* Rate button */}
+          {order.status === 'delivered' && order.rating === null && (
+            <Link href={`/rate-order/${order.id}`} className="block">
+              <div className="bg-gradient-to-r from-[#EBA050] to-[#d4832a] rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md active:scale-[0.99] transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                    <Star size={20} className="text-white fill-white" strokeWidth={0} />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Laundry Address</p>
-                    <p className="text-sm text-gray-800">{track.laundryAddress}</p>
+                    <p className="text-white font-medium text-sm">Rate Your Experience</p>
+                    <p className="text-white/75 text-xs">How was your order?</p>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {canCancelOrder && (
-            <button
-              onClick={() => setShowCancelModal(true)}
-              className="w-full bg-red-50 text-red-600 py-3.5 rounded-2xl text-sm font-medium hover:bg-red-100 transition-all"
-            >
-              Cancel Order
-            </button>
+                <div className="flex">
+                  {[1,2,3,4,5].map(i => <Star key={i} size={14} className="text-white/60" strokeWidth={1.5} />)}
+                </div>
+              </div>
+            </Link>
           )}
-        </div>
-      )}
 
-      {showCancelModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white rounded-3xl p-5 shadow-xl">
-            <h2 className="text-lg text-gray-900 mb-2">Cancel this order?</h2>
-            <p className="text-sm text-gray-500 mb-5 leading-relaxed">
-              The current backend only allows cancellation while the order is still pending confirmation.
-            </p>
-            <div className="flex gap-2.5">
-              <button
-                onClick={() => setShowCancelModal(false)}
-                className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-all"
-                disabled={isCancelling}
-              >
-                Keep Order
-              </button>
-              <button
-                onClick={handleCancelOrder}
-                className="flex-1 py-3 rounded-2xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-all disabled:opacity-70"
-                disabled={isCancelling}
-              >
-                {isCancelling ? "Cancelling..." : "Cancel Order"}
-              </button>
+          {/* Already rated */}
+          {order.status === 'delivered' && order.rating !== null && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <p className="text-xs font-semibold text-gray-400 tracking-wider mb-3">YOUR RATING</p>
+              <div className="flex items-center gap-1.5 mb-2">
+                {[1,2,3,4,5].map(i => (
+                  <Star
+                    key={i}
+                    size={20}
+                    className={i <= (order.rating ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}
+                    strokeWidth={1.5}
+                  />
+                ))}
+                <span className="text-sm text-gray-700 font-medium ml-1">{order.rating}/5</span>
+              </div>
+              {order.review && <p className="text-sm text-gray-600 italic">&quot;{order.review}&quot;</p>}
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

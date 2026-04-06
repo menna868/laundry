@@ -1,10 +1,18 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Truck, Zap, DollarSign, Package, CreditCard, BarChart3 } from 'lucide-react';
+import { useState } from 'react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 
 export default function RinseRepeat() {
   const router = useRouter();
+  const [selectedBags, setSelectedBags] = useState<1 | 2 | 4>(2);
+
+  const bagOptions = [
+    { bags: 1, pricePerBag: 75, monthlyTotal: 75, label: "Ideal for one person's needs" },
+    { bags: 2, pricePerBag: 72, monthlyTotal: 144, label: "Perfect for couples", popular: true },
+    { bags: 4, pricePerBag: 70, monthlyTotal: 280, label: "Great for families" },
+  ];
 
   return (
     <div className="min-h-screen bg-white" dir="ltr">

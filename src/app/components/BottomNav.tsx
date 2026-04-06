@@ -1,7 +1,11 @@
 import { Home, ShoppingBag, User } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 export function BottomNav() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
     { path: '/orders', icon: ShoppingBag, label: 'Orders' },

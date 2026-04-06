@@ -1,6 +1,6 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, MapPin, Phone, MessageCircle, Share2 } from 'lucide-react';
+import { ArrowLeft, Package, Clock, MapPin, Phone, MessageCircle, Share2 } from 'lucide-react';
 import { BottomNav } from '../components/BottomNav';
 import { OrderStatusTracker } from '../components/OrderStatusTracker';
 
