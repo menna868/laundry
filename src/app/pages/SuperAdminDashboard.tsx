@@ -23,66 +23,41 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell,
-  BarChart,
-  Bar,
+  Cell
 } from "recharts";
 
 import { apiRequest } from "../lib/admin-api";
-import type { LaundryRecord, UserRecord } from "../types/admin";
 
-// ---------------------------------------------
-// MOCK DATA FOR CHARTS (Mirroring Figma exactly)
-// ---------------------------------------------
-const revenueData = [
-  { name: "Jan", revenue: 85, profit: 45 },
-  { name: "Feb", revenue: 95, profit: 55 },
-  { name: "Mar", revenue: 110, profit: 60 },
-  { name: "Apr", revenue: 90, profit: 50 },
-  { name: "May", revenue: 125, profit: 70 },
-  { name: "Jun", revenue: 142.5, profit: 85 },
-];
+interface SystemAnalyticsData {
+  totalRevenue: number;
+  revenueGrowth: string;
+  totalOrders: number;
+  ordersToday: number;
+  ordersTodayGrowth: string;
+  activeLaundries: number;
+  laundriesGrowth: string;
+  totalUsers: number;
+  usersGrowth: string;
+  monthlyRevenue: { month: string; revenue: number; orders: number; profit: number }[];
+  orderStatusDistribution: { name: string; value: number; color: string }[];
+  topPerformingLaundries: { id: number; name: string; city: string; orders: string; rev: string }[];
+  ordersByCity: { name: string; value: number; color: string }[];
+  recentOrders: { id: string; customer: string; laundry: string; amount: string; time: string; status: string }[];
+  healthScore: number;
+  uptime: number;
+  avgRating: number;
+}
 
-const orderStatusData = [
-  { name: "Completed", value: 62, color: "#10B981" },
-  { name: "In Progress", value: 18, color: "#3B82F6" },
-  { name: "Pending", value: 12, color: "#F59E0B" },
-  { name: "Cancelled", value: 8, color: "#EF4444" },
-];
+function formatTimeAgo(isoString: string) {
+  const date = new Date(isoString);
+  const diff = (new Date().getTime() - date.getTime()) / 1000;
+  if (diff < 60) return "Just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)} mins ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+  return `${Math.floor(diff / 86400)} days ago`;
+}
 
-const cityData = [
-  { name: "Riyadh", value: 38, color: "#2A5C66" },
-  { name: "Jeddah", value: 24, color: "#3B82F6" },
-  { name: "Dammam", value: 15, color: "#10B981" },
-  { name: "Mecca", value: 12, color: "#F59E0B" },
-  { name: "Medina", value: 11, color: "#8B5CF6" },
-];
-
-const hourlyData = [
-  { time: "8am", orders: 40 },
-  { time: "10am", orders: 120 },
-  { time: "12pm", orders: 200 },
-  { time: "2pm", orders: 180 },
-  { time: "4pm", orders: 250 },
-  { time: "6pm", orders: 380 },
-  { time: "8pm", orders: 220 },
-  { time: "10pm", orders: 90 },
-];
-
-const topLaundries = [
-  { id: 1, name: "Al Jawhara Laundry", city: "Riyadh", orders: "1,240", rev: "SAR 38.2K" },
-  { id: 2, name: "Clean & Care", city: "Jeddah", orders: "980", rev: "SAR 29.4K" },
-  { id: 3, name: "Speed Wash Pro", city: "Dammam", orders: "856", rev: "SAR 25.1K" },
-  { id: 4, name: "Modern Laundry", city: "Riyadh", orders: "742", rev: "SAR 22.8K" },
-  { id: 5, name: "Royal Cleaners", city: "Mecca", orders: "695", rev: "SAR 20.1K" },
-];
-
-const recentOrdersList = [
-  { id: "#ND-4521", customer: "Omar K.", laundry: "Al Jawhara Laundry", amount: "SAR 45", time: "12 mins ago", status: "Completed" },
-  { id: "#ND-4520", customer: "Sara M.", laundry: "Clean & Care", amount: "SAR 120", time: "28 mins ago", status: "In Progress" },
-  { id: "#ND-4519", customer: "Fahad A.", laundry: "Speed Wash Pro", amount: "SAR 85", time: "1 hour ago", status: "Pending" },
-  { id: "#ND-4518", customer: "Noura S.", laundry: "Modern Laundry", amount: "SAR 65", time: "2 hours ago", status: "Cancelled" },
-];
+// Data now comes securely from the backend API
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -100,27 +75,33 @@ function getStatusBadge(status: string) {
 }
 
 export function SuperAdminDashboard() {
-  const [laundries, setLaundries] = useState<LaundryRecord[]>([]);
-  const [users, setUsers] = useState<UserRecord[]>([]);
+  const [data, setData] = useState<SystemAnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
     async function loadDashboard() {
       try {
-        const [laundriesResponse, usersResponse] = await Promise.all([
-          apiRequest<LaundryRecord[]>("/admin/laundries"),
-          apiRequest<UserRecord[]>("/admin/users"),
-        ]);
+        const response = await apiRequest<SystemAnalyticsData>("/analytics/system");
         if (!isMounted) return;
-        setLaundries(laundriesResponse);
-        setUsers(usersResponse);
+        setData(response);
       } catch (err) {
         console.error("Dashboard hook failed", err);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     }
     loadDashboard();
     return () => { isMounted = false; };
   }, []);
+
+  if (loading || !data) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2A5C66]"></div>
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 pb-10">
@@ -135,7 +116,19 @@ export function SuperAdminDashboard() {
              <option>Last 7 Days</option>
              <option>This Year</option>
           </select>
-          <button className="bg-[#2A5C66] hover:bg-[#2A5C66]/90 text-white text-[13px] font-semibold rounded-xl px-5 py-2 shadow-sm transition-colors">
+          <button 
+            onClick={() => {
+              const csvContent = "data:text/csv;charset=utf-8,Metric,Value\nTotal Revenue," + data.totalRevenue + "\nActive Laundries," + data.activeLaundries;
+              const encodedUri = encodeURI(csvContent);
+              const link = document.createElement("a");
+              link.setAttribute("href", encodedUri);
+              link.setAttribute("download", "system_report.csv");
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
+            className="bg-[#2A5C66] hover:bg-[#2A5C66]/90 text-white text-[13px] font-semibold rounded-xl px-5 py-2 shadow-sm transition-colors"
+          >
             Generate Report
           </button>
         </div>
@@ -150,11 +143,11 @@ export function SuperAdminDashboard() {
               <DollarSign size={20} />
             </div>
             <span className="flex items-center gap-1 text-[12px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
-              <TrendingUp size={14} /> +12.5%
+              {data.revenueGrowth?.startsWith("-") ? <TrendingDown size={14} /> : <TrendingUp size={14} />} {data.revenueGrowth}
             </span>
           </div>
           <p className="text-slate-500 text-[13px] font-medium">Total Revenue</p>
-          <h3 className="text-2xl font-bold text-slate-800 mt-1">SAR 142.5K</h3>
+          <h3 className="text-2xl font-bold text-slate-800 mt-1">EGP {data.totalRevenue?.toLocaleString("en-US", { maximumFractionDigits: 1 }) || 0}</h3>
         </div>
 
         {/* Laundries */}
@@ -164,11 +157,11 @@ export function SuperAdminDashboard() {
               <Store size={20} />
             </div>
             <span className="flex items-center gap-1 text-[12px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
-              <TrendingUp size={14} /> +4
+              {data.laundriesGrowth?.startsWith("-") ? <TrendingDown size={14} /> : <TrendingUp size={14} />} {data.laundriesGrowth}
             </span>
           </div>
           <p className="text-slate-500 text-[13px] font-medium">Active Laundries</p>
-          <h3 className="text-2xl font-bold text-slate-800 mt-1">{laundries.length || 342}</h3>
+          <h3 className="text-2xl font-bold text-slate-800 mt-1">{data.activeLaundries || 0}</h3>
         </div>
 
         {/* Users */}
@@ -178,11 +171,11 @@ export function SuperAdminDashboard() {
               <Users size={20} />
             </div>
             <span className="flex items-center gap-1 text-[12px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
-              <TrendingUp size={14} /> +24%
+              {data.usersGrowth?.startsWith("-") ? <TrendingDown size={14} /> : <TrendingUp size={14} />} {data.usersGrowth}
             </span>
           </div>
           <p className="text-slate-500 text-[13px] font-medium">Total Users</p>
-          <h3 className="text-2xl font-bold text-slate-800 mt-1">{users.length || "12,847"}</h3>
+          <h3 className="text-2xl font-bold text-slate-800 mt-1">{data.totalUsers?.toLocaleString() || 0}</h3>
         </div>
 
         {/* Orders */}
@@ -191,12 +184,12 @@ export function SuperAdminDashboard() {
             <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
               <Package size={20} />
             </div>
-            <span className="flex items-center gap-1 text-[12px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded-lg">
-              <TrendingDown size={14} /> -2.1%
+            <span className="flex items-center gap-1 text-[12px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+              {data.ordersTodayGrowth?.startsWith("-") ? <TrendingDown size={14} /> : <TrendingUp size={14} />} {data.ordersTodayGrowth}
             </span>
           </div>
           <p className="text-slate-500 text-[13px] font-medium">Orders Today</p>
-          <h3 className="text-2xl font-bold text-slate-800 mt-1">1,847</h3>
+          <h3 className="text-2xl font-bold text-slate-800 mt-1">{data.ordersToday?.toLocaleString() || 0}</h3>
         </div>
       </div>
 
@@ -215,13 +208,13 @@ export function SuperAdminDashboard() {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+              <LineChart data={data.monthlyRevenue} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#64748B" }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#64748B" }} tickFormatter={(val) => `SAR ${val}K`} />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#64748B" }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#64748B" }} tickFormatter={(val) => `EGP ${val}K`} />
                 <Tooltip
                   contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
-                  formatter={(value: number) => [`SAR ${value}K`, ""]}
+                  formatter={(value: number) => [`EGP ${value}K`, ""]}
                 />
                 <Line type="monotone" dataKey="revenue" stroke="#2A5C66" strokeWidth={3} strokeLinecap="round" dot={{ r: 4, strokeWidth: 2, fill: "#fff" }} activeDot={{ r: 6, stroke: "#2A5C66", strokeWidth: 2 }} />
                 <Line type="monotone" dataKey="profit" stroke="#EBA050" strokeWidth={3} strokeLinecap="round" dot={{ r: 4, strokeWidth: 2, fill: "#fff" }} activeDot={{ r: 6, stroke: "#EBA050", strokeWidth: 2 }} />
@@ -240,25 +233,27 @@ export function SuperAdminDashboard() {
             <div className="h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={70} outerRadius={95} paddingAngle={2} dataKey="value" stroke="none">
-                    {orderStatusData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  <Pie data={data.orderStatusDistribution || []} cx="50%" cy="50%" innerRadius={70} outerRadius={95} paddingAngle={2} dataKey="value" stroke="none">
+                    {(data.orderStatusDistribution || []).map((entry: any, index: number) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                   </Pie>
                   <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
-              <span className="text-3xl font-bold text-slate-800">6.2K</span>
+              <span className="text-3xl font-bold text-slate-800">{data.totalOrders > 1000 ? (data.totalOrders / 1000).toFixed(1) + 'K' : data.totalOrders}</span>
               <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mt-1">Total Orders</span>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 mt-4">
-            {orderStatusData.map((s) => (
+            {(data.orderStatusDistribution || []).map((s: any) => (
               <div key={s.name} className="flex items-center gap-2 bg-slate-50 rounded-xl p-2.5">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
                 <div className="flex-1">
                   <p className="text-[11px] font-semibold text-slate-500">{s.name}</p>
-                  <p className="text-[13px] font-bold text-slate-800">{s.value}%</p>
+                  <p className="text-[13px] font-bold text-slate-800">
+                    {data.totalOrders === 0 ? 0 : Math.round((s.value / data.totalOrders) * 100)}%
+                  </p>
                 </div>
               </div>
             ))}
@@ -287,11 +282,11 @@ export function SuperAdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100/60 text-[13px]">
-                {topLaundries.map((laundry, i) => (
+                {(data.topPerformingLaundries || []).map((laundry: any, i: number) => (
                   <tr key={laundry.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-5 py-3">
                       <div className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[11px] ${i < 3 ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-600'}`}>
-                        #{laundry.id}
+                        #{i + 1}
                       </div>
                     </td>
                     <td className="px-5 py-3">
@@ -314,9 +309,9 @@ export function SuperAdminDashboard() {
               <h2 className="text-base font-bold text-slate-800">Orders by City</h2>
             </div>
             <div className="space-y-3">
-              {cityData.map((city) => (
+              {(data.ordersByCity || []).map((city: any) => (
                 <div key={city.name} className="flex items-center gap-3">
-                  <span className="text-[12px] font-medium text-slate-600 w-16">{city.name}</span>
+                  <span className="text-[12px] font-medium text-slate-600 w-16 truncate">{city.name}</span>
                   <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${city.value}%`, backgroundColor: city.color }} />
                   </div>
@@ -333,11 +328,11 @@ export function SuperAdminDashboard() {
               </div>
             </div>
             <div className="p-2 space-y-1">
-              {recentOrdersList.map((order) => (
+              {(data.recentOrders || []).map((order: any) => (
                 <div key={order.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors">
                   <div className="flex flex-col">
                     <span className="text-[13px] font-bold text-slate-800">{order.id} &bull; <span className="font-semibold text-slate-600">{order.customer}</span></span>
-                    <span className="text-[11px] text-slate-400 mt-0.5">{order.laundry} &bull; {order.time}</span>
+                    <span className="text-[11px] text-slate-400 mt-0.5">{order.laundry} &bull; {formatTimeAgo(order.time)}</span>
                   </div>
                   <div className="flex flex-col items-end gap-1.5">
                     <span className="text-[13px] font-bold text-slate-800">{order.amount}</span>
@@ -363,15 +358,15 @@ export function SuperAdminDashboard() {
             <div className="flex items-center gap-6 divide-x divide-white/20">
                <div className="px-4">
                   <p className="text-xs text-emerald-200 font-semibold tracking-wider uppercase mb-1">Health Score</p>
-                  <p className="text-3xl font-bold">94.7%</p>
+                  <p className="text-3xl font-bold">{data.healthScore || 94.7}%</p>
                </div>
                <div className="px-4">
                   <p className="text-xs text-emerald-200 font-semibold tracking-wider uppercase mb-1">Uptime</p>
-                  <p className="text-3xl font-bold">99.9%</p>
+                  <p className="text-3xl font-bold">{data.uptime || 99.9}%</p>
                </div>
                <div className="px-4">
                   <p className="text-xs text-emerald-200 font-semibold tracking-wider uppercase mb-1">Avg Rating</p>
-                  <p className="text-3xl font-bold flex items-center gap-1">4.7 <span className="text-yellow-400">★</span></p>
+                  <p className="text-3xl font-bold flex items-center gap-1">{data.avgRating || 4.7} <span className="text-yellow-400">★</span></p>
                </div>
             </div>
          </div>

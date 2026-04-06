@@ -1,19 +1,41 @@
 "use client";
 
 import { Bell, Search, Menu, Command } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../../context/AuthContext";
+import Link from "next/link";
+import { apiRequest } from "../../lib/admin-api";
 
-const notifications = [
-  { id: 1, title: "Fraud Alert Detected", desc: "Suspicious payment on order #4421", time: "5 min ago", type: "danger" },
-  { id: 2, title: "New Laundry Onboarded", desc: "Clean & Care joined from Jeddah", time: "1 hour ago", type: "success" },
-  { id: 3, title: "Revenue Milestone", desc: "Monthly revenue exceeded SAR 150K", time: "3 hours ago", type: "info" },
-];
+function formatTimeAgo(isoString: string) {
+  const date = new Date(isoString);
+  const diff = (new Date().getTime() - date.getTime()) / 1000;
+  if (diff < 60) return "Just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)} mins ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+  return `${Math.floor(diff / 86400)} days ago`;
+}
 
 export function Header({ setSidebarOpen }: { setSidebarOpen: (v: boolean) => void }) {
   const [showNotifications, setShowNotifications] = useState(false);
-  const { user } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { user, logout } = useAuth();
+  const [notes, setNotes] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    async function fetchNotes() {
+      try {
+        const res = await apiRequest<any>("/api/notifications?pageSize=5");
+        const list = Array.isArray(res) ? res : res.data || [];
+        setNotes(list);
+        setUnreadCount(list.filter((n: any) => !n.isRead).length);
+      } catch (err) {
+        console.error("Failed to load header notifications", err);
+      }
+    }
+    fetchNotes();
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-xl border-b border-slate-100/80 flex items-center justify-between px-4 lg:px-6 shrink-0" dir="ltr">
@@ -57,10 +79,12 @@ export function Header({ setSidebarOpen }: { setSidebarOpen: (v: boolean) => voi
             className="relative p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"
           >
             <Bell size={18} />
-            <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-            </span>
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              </span>
+            )}
           </button>
 
           <AnimatePresence>
@@ -76,28 +100,35 @@ export function Header({ setSidebarOpen }: { setSidebarOpen: (v: boolean) => voi
                 >
                   <div className="p-3.5 border-b border-slate-100 flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-slate-800">Notifications</h3>
-                    <span className="text-[10px] font-semibold text-[#2A5C66] bg-[#2A5C66]/10 px-2 py-0.5 rounded-full">3 new</span>
+                    {unreadCount > 0 && (
+                      <span className="text-[10px] font-semibold text-[#2A5C66] bg-[#2A5C66]/10 px-2 py-0.5 rounded-full">{unreadCount} new</span>
+                    )}
                   </div>
                   <div className="max-h-72 overflow-y-auto p-1.5 space-y-0.5">
-                    {notifications.map((n) => (
-                      <div key={n.id} className="flex gap-3 p-2.5 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                          n.type === "danger" ? "bg-red-50 text-red-500" :
-                          n.type === "success" ? "bg-emerald-50 text-emerald-500" :
-                          "bg-blue-50 text-blue-500"
-                        }`}>
-                          <Bell size={14} />
+                    {notes.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-400">No recent notifications</div>
+                    ) : (
+                      notes.slice(0, 5).map((n) => (
+                        <div key={n.id} className="flex gap-3 p-2.5 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                            n.type === 2 ? "bg-red-50 text-red-500" :
+                            n.type === 1 ? "bg-emerald-50 text-emerald-500" :
+                            "bg-blue-50 text-blue-500"
+                          }`}>
+                            <Bell size={14} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-semibold text-slate-700 truncate">{n.title}</p>
+                            <p className="text-[11px] text-slate-400 truncate mt-0.5">{n.message}</p>
+                            <p className="text-[10px] text-slate-300 mt-1">{formatTimeAgo(n.createdAt)}</p>
+                          </div>
+                          {!n.isRead && <span className="w-2 h-2 rounded-full bg-[#2A5C66] shrink-0 mt-1" />}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-semibold text-slate-700 truncate">{n.title}</p>
-                          <p className="text-[11px] text-slate-400 truncate mt-0.5">{n.desc}</p>
-                          <p className="text-[10px] text-slate-300 mt-1">{n.time}</p>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                   <div className="p-2.5 border-t border-slate-100 text-center">
-                    <button className="text-[12px] font-semibold text-[#2A5C66] hover:underline">View All</button>
+                    <Link href="/admin/notifications" onClick={() => setShowNotifications(false)} className="text-[12px] font-semibold text-[#2A5C66] hover:underline block w-full">View All</Link>
                   </div>
                 </motion.div>
               </>
@@ -106,13 +137,41 @@ export function Header({ setSidebarOpen }: { setSidebarOpen: (v: boolean) => voi
         </div>
 
         {/* Admin avatar */}
-        <button className="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-xl transition-colors">
-          <img
-            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user ? `${user.firstName} ${user.lastName}`.trim() : "Admin User")}&background=2A5C66&color=fff&size=64`}
-            alt="Admin"
-            className="w-8 h-8 rounded-lg shadow-sm"
-          />
-        </button>
+        <div className="relative">
+          <button onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-xl transition-colors">
+            <img
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user ? `${user.firstName} ${user.lastName}`.trim() : "Admin User")}&background=2A5C66&color=fff&size=64`}
+              alt="Admin"
+              className="w-8 h-8 rounded-lg shadow-sm"
+            />
+          </button>
+          
+          <AnimatePresence>
+            {showUserMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden z-50 py-1"
+                >
+                  <button 
+                    onClick={() => {
+                      logout();
+                      setShowUserMenu(false);
+                      window.location.href = "/";
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium transition-colors"
+                  >
+                    Logout
+                  </button>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </header>
   );

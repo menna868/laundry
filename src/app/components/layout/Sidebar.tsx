@@ -98,7 +98,7 @@ export function Sidebar({ open, setOpen }: { open: boolean; setOpen: (val: boole
       >
         {/* Logo */}
         <div className="flex items-center justify-between h-[72px] px-5 border-b border-slate-100/60">
-          <div className="flex items-center gap-2.5">
+          <Link href="/admin" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2A5C66] to-[#3a7c8a] flex items-center justify-center text-white font-bold text-base shadow-lg shadow-[#2A5C66]/20">
               N
             </div>
@@ -106,7 +106,7 @@ export function Sidebar({ open, setOpen }: { open: boolean; setOpen: (val: boole
               <h1 className="text-base font-bold text-slate-800 tracking-tight leading-none">Ndeef</h1>
               <p className="text-[10px] font-semibold text-[#EBA050] tracking-widest uppercase mt-0.5">Admin Panel</p>
             </div>
-          </div>
+          </Link>
           <button
             onClick={() => setOpen(false)}
             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg lg:hidden transition-colors"
@@ -133,18 +133,23 @@ export function Sidebar({ open, setOpen }: { open: boolean; setOpen: (val: boole
         {/* User Profile */}
         <div className="p-3 border-t border-slate-100/60">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-100/50">
-            <img
-              src="https://ui-avatars.com/api/?name=Ahmed+M&background=2A5C66&color=fff&size=80"
-              alt="Admin"
-              className="w-9 h-9 rounded-lg object-cover shadow-sm"
-            />
-            <div className="flex-1 min-w-0">
-              <h4 className="text-[13px] font-semibold text-slate-800 truncate">{user ? `${user.firstName} ${user.lastName}`.trim() : "Admin"}</h4>
-              <p className="text-[11px] text-slate-400">{user?.role || "Super Admin"}</p>
-            </div>
+            <Link href="/" className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity">
+              <img
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user ? `${user.firstName} ${user.lastName}`.trim() : "Admin User")}&background=2A5C66&color=fff&size=80`}
+                alt="Admin"
+                className="w-9 h-9 rounded-lg object-cover shadow-sm"
+              />
+              <div className="flex-1 min-w-0">
+                <h4 className="text-[13px] font-semibold text-slate-800 truncate">{user ? `${user.firstName} ${user.lastName}`.trim() : "Admin"}</h4>
+                <p className="text-[11px] text-slate-400">{user?.role || "Super Admin"}</p>
+              </div>
+            </Link>
             <button
-              onClick={logout}
-              className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              onClick={() => {
+                logout();
+                window.location.href = "/";
+              }}
+              className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg z-10 transition-colors relative"
             >
               <LogOut size={16} />
             </button>
