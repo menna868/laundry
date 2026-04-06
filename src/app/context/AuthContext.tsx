@@ -1,6 +1,6 @@
 "use client"
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { emailLogin } from '../services/api';
+import { emailLogin, googleLogin, register } from '../services/api';
 
 export interface User {
   id: string;
@@ -19,7 +19,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   signup: (data: SignupData) => Promise<boolean>;
   logout: () => void;
-  socialLogin: (provider: string) => Promise<boolean>;
+  socialLogin: (idToken: string) => Promise<boolean>;
 }
 
 export interface SignupData {
@@ -33,16 +33,6 @@ export interface SignupData {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Demo user for testing
-const DEMO_USER: User = {
-  id: 'usr_001',
-  firstName: 'Basel',
-  lastName: 'Ahmed',
-  email: 'basel@nadeef.app',
-  phone: '+20 100 123 4567',
-  address: '14 Tahrir Square, Cairo',
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
@@ -55,20 +45,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const res = await emailLogin(email, password);
+      const res = await emailLogin(email, password) as any;
       if (res.isSuccess && res.data) {
         const u = res.data;
         const loggedIn: User = {
-          id: u.id,
-          firstName: u.name.split(' ')[0] || '',
-          lastName: u.name.split(' ').slice(1).join(' ') || '',
-          email: u.email,
-          phone: u.phoneNumber || '',
-          role: u.role || 'Customer',
-          token: u.token
+          id: u.id || u.Id,
+          firstName: u.name?.split(' ')[0] || u.Name?.split(' ')[0] || '',
+          lastName: u.name?.split(' ').slice(1).join(' ') || u.Name?.split(' ').slice(1).join(' ') || '',
+          email: u.email || u.Email,
+          phone: u.phoneNumber || u.PhoneNumber || '',
+          role: u.role || u.Role || 'Customer',
+          token: u.token || u.Token
         };
         setUser(loggedIn);
-        localStorage.setItem('nadeef_session', JSON.stringify({ token: u.token }));
+        localStorage.setItem('nadeef_session', JSON.stringify({ token: loggedIn.token }));
         localStorage.setItem('nadeef_user', JSON.stringify(loggedIn));
         return true;
       }
@@ -80,34 +70,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signup = async (data: SignupData): Promise<boolean> => {
-    await new Promise(r => setTimeout(r, 1200));
-    const newUser: User = {
-      id: `usr_${Date.now()}`,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-    };
-    setUser(newUser);
-    localStorage.setItem('nadeef_user', JSON.stringify(newUser));
-    return true;
+    try {
+      const res = await register({
+        name: `${data.firstName} ${data.lastName}`,
+        email: data.email,
+        password: data.password,
+        phoneNumber: data.phone
+      }) as any;
+
+      if (res.isSuccess && res.data) {
+        const u = res.data;
+        const loggedIn: User = {
+          id: u.id || u.Id,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          address: data.address,
+          token: u.token || u.Token,
+          role: u.role || u.Role || 'Customer'
+        };
+        setUser(loggedIn);
+        localStorage.setItem('nadeef_session', JSON.stringify({ token: loggedIn.token }));
+        localStorage.setItem('nadeef_user', JSON.stringify(loggedIn));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
   };
 
-  const socialLogin = async (provider: string): Promise<boolean> => {
-    await new Promise(r => setTimeout(r, 900));
-    const socialUser: User = {
-      ...DEMO_USER,
-      id: `usr_${provider}_${Date.now()}`,
-    };
-    setUser(socialUser);
-    localStorage.setItem('nadeef_user', JSON.stringify(socialUser));
-    return true;
+  const socialLogin = async (idToken: string): Promise<boolean> => {
+    try {
+      const res = await googleLogin(idToken) as any;
+      if (res.isSuccess && res.data) {
+        const u = res.data;
+        const loggedIn: User = {
+          id: u.id || u.Id,
+          firstName: u.name?.split(' ')[0] || u.Name?.split(' ')[0] || '',
+          lastName: u.name?.split(' ').slice(1).join(' ') || u.Name?.split(' ').slice(1).join(' ') || '',
+          email: u.email || u.Email,
+          phone: u.phoneNumber || u.PhoneNumber || '',
+          role: u.role || u.Role || 'Customer',
+          token: u.token || u.Token
+        };
+        setUser(loggedIn);
+        localStorage.setItem('nadeef_session', JSON.stringify({ token: loggedIn.token }));
+        localStorage.setItem('nadeef_user', JSON.stringify(loggedIn));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Social login error:', err);
+      return false;
+    }
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('nadeef_user');
+    localStorage.removeItem('nadeef_session');
   };
 
   return (
