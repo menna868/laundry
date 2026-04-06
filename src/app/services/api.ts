@@ -86,11 +86,11 @@ export async function emailLogin(
 
     const json = await res.json();
     if (!res.ok || json.isSuccess === false) {
-      let errorMsg = json.error ?? json.Message ?? json.message ?? json.title;
-      if (!errorMsg && json.errors) {
+      let errorMsg = json.error ?? json.Message ?? json.message;
+      if (json.errors) {
         errorMsg = Object.values(json.errors).flat().join(", ");
       }
-      return { isSuccess: false, error: errorMsg ?? `Login failed: ${JSON.stringify(json)}` };
+      return { isSuccess: false, error: errorMsg ?? json.title ?? `Login failed: ${JSON.stringify(json)}` };
     }
     return { isSuccess: true, data: json.data ?? json };
   } catch (err: unknown) {
@@ -105,17 +105,21 @@ export async function register(data: {
   email: string;
   password: string;
   phoneNumber: string;
-  role?: string;
+  role?: number;
 }): Promise<ApiResult<BackendUser>> {
   const res = await fetch(`${BASE_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...data, role: data.role ?? "Customer" }),
+    body: JSON.stringify({ ...data, role: data.role ?? 1 }),
   });
 
   const json = await res.json();
   if (!res.ok || json.isSuccess === false) {
-    return { isSuccess: false, error: json.error ?? "Registration failed" };
+    let errorMsg = json.error ?? json.Message ?? json.message;
+    if (json.errors) {
+      errorMsg = Object.values(json.errors).flat().join(", ");
+    }
+    return { isSuccess: false, error: errorMsg ?? json.title ?? "Registration failed" };
   }
   return { isSuccess: true, data: json.data ?? json };
 }

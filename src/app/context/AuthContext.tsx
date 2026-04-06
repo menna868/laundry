@@ -17,7 +17,8 @@ interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (data: SignupData) => Promise<boolean>;
+  signup: (data: SignupData) => Promise<{ success: boolean; error?: string }>;
+  verifyEmail: (email: string, otpCode: string) => Promise<{ ok: boolean; message?: string }>;
   logout: () => void;
   socialLogin: (idToken: string) => Promise<boolean>;
 }
@@ -28,7 +29,6 @@ export interface SignupData {
   email: string;
   phone: string;
   password: string;
-  address?: string;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async (data: SignupData): Promise<boolean> => {
+  const signup = async (data: SignupData): Promise<{success: boolean, error?: string}> => {
     try {
       const res = await register({
         name: `${data.firstName} ${data.lastName}`,
@@ -78,27 +78,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         phoneNumber: data.phone
       }) as any;
 
+      if (res.isSuccess) {
+        // User is created but must verify email. Don't set token or log them in.
+        return { success: true };
+      }
+      return { success: false, error: res.error || 'Signup failed' };
+    } catch (err: any) {
+      console.error(err);
+      return { success: false, error: err.message || 'Signup failed' };
+    }
+  };
+
+  const verifyEmail = async (email: string, otpCode: string): Promise<{ ok: boolean; message?: string }> => {
+    try {
+      const { verifyOtp } = await import('../services/api');
+      const res = await verifyOtp(email, otpCode);
       if (res.isSuccess && res.data) {
-        const u = res.data;
+        const tokenObj: any = res.data;
+        const actualToken = typeof tokenObj === 'string' ? tokenObj : (tokenObj.token || tokenObj.Token);
+
+        if (!actualToken) {
+          return { ok: false, message: 'No token received from verification' };
+        }
+
+        // Decode JWT to set user session
+        let payload: any = {};
+        try {
+          payload = JSON.parse(atob(actualToken.split('.')[1]));
+        } catch { }
+
+        const userName = payload.Name || payload.name || 'User';
         const loggedIn: User = {
-          id: u.id || u.Id,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone,
-          address: data.address,
-          token: u.token || u.Token,
-          role: u.role || u.Role || 'Customer'
+          id: payload.uid || payload.nameid || '',
+          firstName: userName.split(' ')[0] || '',
+          lastName: userName.split(' ').slice(1).join(' ') || '',
+          email: payload.email || email,
+          phone: '',
+          role: payload.role || 'Customer',
+          token: actualToken
         };
         setUser(loggedIn);
         localStorage.setItem('nadeef_session', JSON.stringify({ token: loggedIn.token }));
         localStorage.setItem('nadeef_user', JSON.stringify(loggedIn));
-        return true;
+        return { ok: true };
       }
-      return false;
-    } catch (err) {
-      console.error(err);
-      return false;
+      return { ok: false, message: res.error || 'Verification failed' };
+    } catch (err: any) {
+      return { ok: false, message: err.message || 'Network error' };
     }
   };
 
@@ -135,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, login, signup, logout, socialLogin }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, login, signup, verifyEmail, logout, socialLogin }}>
       {children}
     </AuthContext.Provider>
   );
