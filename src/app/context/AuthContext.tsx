@@ -1,5 +1,6 @@
 "use client"
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { emailLogin } from '../services/api';
 
 export interface User {
   id: string;
@@ -8,6 +9,8 @@ export interface User {
   email: string;
   phone: string;
   address?: string;
+  role?: string;
+  token?: string;
 }
 
 interface AuthContextType {
@@ -50,15 +53,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = async (email: string, _password: string): Promise<boolean> => {
-    await new Promise(r => setTimeout(r, 1100));
-    // Accept any email/password for demo; or match demo user
-    const loggedIn: User = email === DEMO_USER.email
-      ? DEMO_USER
-      : { ...DEMO_USER, email, id: `usr_${Date.now()}` };
-    setUser(loggedIn);
-    localStorage.setItem('nadeef_user', JSON.stringify(loggedIn));
-    return true;
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const res = await emailLogin(email, password);
+      if (res.isSuccess && res.data) {
+        const u = res.data;
+        const loggedIn: User = {
+          id: u.id,
+          firstName: u.name.split(' ')[0] || '',
+          lastName: u.name.split(' ').slice(1).join(' ') || '',
+          email: u.email,
+          phone: u.phoneNumber || '',
+          role: u.role || 'Customer',
+          token: u.token
+        };
+        setUser(loggedIn);
+        localStorage.setItem('nadeef_session', JSON.stringify({ token: u.token }));
+        localStorage.setItem('nadeef_user', JSON.stringify(loggedIn));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
   };
 
   const signup = async (data: SignupData): Promise<boolean> => {

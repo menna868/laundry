@@ -60,8 +60,17 @@ export default function Login() {
     setLoading(true);
     const ok = await login(email, password);
     setLoading(false);
-    if (ok) router.replace(from);
-    else setError('Invalid email or password. Please try again.');
+    if (ok) {
+        const raw = localStorage.getItem('nadeef_user');
+        const loggedUser = raw ? JSON.parse(raw) : null;
+        if (loggedUser && (loggedUser.role === 'Admin' || loggedUser.role === 'SuperAdmin')) {
+            router.replace('/admin');
+        } else {
+            router.replace(from);
+        }
+    } else {
+        setError('Invalid email or password. Please try again.');
+    }
   };
 
   const handleSocial = async (provider: string) => {
