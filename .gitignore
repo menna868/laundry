@@ -33,3 +33,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDEs and Tools
+.vs/
+.idea/
+.vscode/
+
+# Scratch scripts
+update_signup.py
