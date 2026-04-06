@@ -1,5 +1,9 @@
+"use client";
+
 import Link from 'next/link';
 import { ArrowLeft, MessageCircle, Mail, Phone, ChevronRight } from 'lucide-react';
+import { useState } from "react";
+import { ChatWidget } from "@/app/components/chat/ChatWidget";
 
 const faqItems = [
   {
@@ -21,6 +25,7 @@ const faqItems = [
 ];
 
 export default function Help() {
+  const [chatOpen, setChatOpen] = useState(false);
   return (
     <div className="min-h-screen bg-white" dir="ltr">
       <div className="sticky top-0 bg-white border-b border-gray-200 px-4 md:px-8 lg:px-12 py-4 z-10">
@@ -36,7 +41,11 @@ export default function Help() {
         <div className="mb-8 md:mb-10">
           <h2 className="text-xs font-bold text-gray-900 tracking-wider mb-4 md:mb-5">CONTACT US</h2>
           <div className="space-y-3 md:space-y-4">
-            <button className="w-full bg-white border border-gray-200 rounded-2xl p-4 md:p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
+            <button
+              type="button"
+              onClick={() => setChatOpen(true)}
+              className="w-full bg-white border border-gray-200 rounded-2xl p-4 md:p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
+            >
               <div className="w-12 h-12 md:w-14 md:h-14 bg-[#1D6076]/10 rounded-xl flex items-center justify-center shrink-0">
                 <MessageCircle size={20} className="text-[#1D6076] md:w-6 md:h-6" strokeWidth={2} />
               </div>
@@ -89,6 +98,8 @@ export default function Help() {
           </div>
         </div>
       </div>
+
+      {chatOpen && <ChatWidget onClose={() => setChatOpen(false)} />}
     </div>
   );
 }

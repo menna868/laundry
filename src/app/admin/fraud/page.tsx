@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ShieldAlert, AlertTriangle, CheckCircle, Ban, Search, Activity } from "lucide-react";
+import { ShieldAlert, AlertTriangle, CheckCircle, Ban, Activity } from "lucide-react";
 import { BASE_URL, getAuthHeaders } from "@/app/services/api";
 
 interface FraudAlert {

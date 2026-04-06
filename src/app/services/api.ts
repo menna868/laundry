@@ -1,3 +1,5 @@
+import { getStoredAuthToken } from "@/app/lib/auth-storage";
+
 // When running on the browser, use the local Next.js rewrite proxy. When running on the server, hit the backend directly.
 export const BASE_URL = typeof window !== "undefined" ? "/api/backend" : "https://ndeefapp.runasp.net/api";
 
@@ -32,20 +34,15 @@ export interface ApiResult<T> {
   error?: string;
 }
 
-/** Get JWT token from localStorage session */
+/** Get JWT token from localStorage (same keys as AuthContext + legacy session) */
 export function getAuthHeaders(): Record<string, string> {
   if (typeof window === "undefined") return { "Content-Type": "application/json" };
-  try {
-    const raw = localStorage.getItem("nadeef_session");
-    if (!raw) return { "Content-Type": "application/json" };
-    const session = JSON.parse(raw);
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.token || session.Token}`,
-    };
-  } catch {
-    return { "Content-Type": "application/json" };
-  }
+  const token = getStoredAuthToken();
+  if (!token) return { "Content-Type": "application/json" };
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
 }
 
 

@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
-import { Wallet, ArrowUpRight, DollarSign, Percent, Building2, Download, Filter } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, BarChart, Bar } from "recharts";
+import { Wallet, DollarSign, Percent, Building2, Download } from "lucide-react";
+import { XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, BarChart, Bar } from "recharts";
 import clsx from "clsx";
 
 const monthlyCommissions = [

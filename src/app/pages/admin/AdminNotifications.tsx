@@ -55,7 +55,7 @@ export function AdminNotifications() {
     try {
       setLoading(true);
       // Pagination response: assuming it returns { data, count, page... } or just array. Let's handle both.
-      const res = await apiRequest<any>("/api/notifications?pageSize=50");
+      const res = await apiRequest<any>("/notifications?pageSize=50");
       setItems(Array.isArray(res) ? res : res.data || []);
     } catch (err) {
       console.error("Failed to load notifications", err);
@@ -66,7 +66,7 @@ export function AdminNotifications() {
 
   const markAllRead = async () => {
     try {
-      await apiRequest("/api/notifications/mark-all-read", { method: "PUT" });
+      await apiRequest("/notifications/mark-all-read", { method: "PUT" });
       setItems(items.map((n) => ({ ...n, isRead: true })));
     } catch (err) {
       console.error("Failed", err);
@@ -80,7 +80,7 @@ export function AdminNotifications() {
 
     setItems(items.map((n) => n.id === id ? { ...n, isRead: true } : n));
     try {
-      await apiRequest(`/api/notifications/${id}/read`, { method: "PUT" });
+      await apiRequest(`/notifications/${id}/read`, { method: "PUT" });
     } catch (err) {
       console.error("Failed", err);
       // Revert if failed
@@ -91,7 +91,7 @@ export function AdminNotifications() {
   const deleteNotification = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      await apiRequest(`/api/notifications/${id}`, { method: "DELETE" });
+      await apiRequest(`/notifications/${id}`, { method: "DELETE" });
       setItems(items.filter((n) => n.id !== id));
     } catch (err) {
       console.error("Failed", err);

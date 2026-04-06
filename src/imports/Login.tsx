@@ -140,6 +140,49 @@ function Link() {
   );
 }
 
+function Icon() {
+  return (
+    <div className="h-[22px] relative w-[19.25px]" data-name="Icon">
+      <div className="absolute inset-[0_0_-1.27%_0]">
+        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 19.25 22.2793">
+          <g id="Icon">
+            <path d={svgPaths.p31a86500} fill="var(--fill-0, #1F1A1A)" id="Vector" />
+          </g>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function Link1() {
+  return (
+    <div className="absolute bg-white border border-[#453536] border-solid h-[54px] left-[calc(33.33%+46px)] rounded-[4px] top-[673.53px] w-[388px]" data-name="Link">
+      <div className="absolute flex h-[22px] items-center justify-center left-[91.47px] top-[14.5px] w-[19.25px]">
+        <div className="-scale-y-100 flex-none">
+          <Icon />
+        </div>
+      </div>
+      <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['AvenirNext:SemiBold',sans-serif] justify-center leading-[0] left-[208.72px] not-italic text-[#1f1a1a] text-[18px] text-center top-[27.52px] whitespace-nowrap">
+        <p className="leading-[24px]">Continue with Apple</p>
+      </div>
+    </div>
+  );
+}
+
+function Icon1() {
+  return (
+    <div className="h-[22px] relative w-[22.94px]" data-name="Icon">
+      <div className="absolute inset-[0_0_-1.27%_0]">
+        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 22.94 22.2793">
+          <g id="Icon">
+            <path d={svgPaths.p298d8000} fill="var(--fill-0, #1F1A1A)" id="Vector" />
+          </g>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 function Link2() {
   return (
     <div className="absolute bg-white border border-[#453536] border-solid h-[53.98px] left-[calc(33.33%+46px)] rounded-[4px] top-[747.53px] w-[388px]" data-name="Link">
@@ -923,7 +966,8 @@ export default function Login() {
       <Background />
       <Button />
       <Link />
-      <Link />
+      <Link1 />
+      <Link2 />
       <LogoBright1Sha25634Ec91F736SvgFill />
       <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['AvenirNext:Medium',sans-serif] h-[28px] justify-center leading-[0] left-[calc(41.67%+120.15px)] not-italic text-[#e47e1a] text-[16px] text-center top-[459.53px] w-[155.681px]">
         <p className="leading-[28px]">I forgot my password</p>

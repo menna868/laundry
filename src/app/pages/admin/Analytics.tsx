@@ -1,12 +1,12 @@
 import { motion } from "motion/react";
 import { useState } from "react";
 import {
-  BarChart3, TrendingUp, Users, Package, DollarSign, ArrowUpRight, ArrowDownRight,
-  Calendar, Download
+  TrendingUp, Users, Package, DollarSign, ArrowUpRight, ArrowDownRight,
+  Download
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, RadialBarChart, RadialBar, Legend
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell
 } from "recharts";
 import clsx from "clsx";
 

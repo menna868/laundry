@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import {
   ShieldAlert, AlertTriangle, Shield, CheckCircle, Eye, Ban,
-  TrendingUp, Clock, ChevronRight, Search
+  TrendingUp, Clock
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import clsx from "clsx";

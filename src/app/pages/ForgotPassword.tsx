@@ -3,64 +3,41 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  AlertCircle,
-  ArrowLeft,
-  CheckCircle2,
-  Loader2,
-  Mail,
-} from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Mail } from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function ForgotPassword() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { forgotPassword } = useAuth();
 
-  const initialEmail = searchParams.get("email") ?? "";
-
-  const [email, setEmail] = useState(initialEmail);
+  const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const validateRequest = () => {
-    const nextErrors: Record<string, string> = {};
-
-    if (!email.trim()) {
-      nextErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      nextErrors.email = "Enter a valid email";
-    }
-
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
-
-  const handleRequestOtp = async (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
     setSuccess("");
 
-    if (!validateRequest()) return;
-
-    setLoading(true);
-    const result = await forgotPassword(email.trim());
-    setLoading(false);
-
-    if (!result.ok) {
-      setError(result.message ?? "Unable to send a reset code right now.");
+    const value = email.trim();
+    if (!value) {
+      setError("Email is required.");
       return;
     }
 
-    setSuccess(
-      result.message ??
-        "If this email exists, an OTP has been sent to help you reset your password.",
-    );
-    router.push(
-      `/reset-password?email=${encodeURIComponent(email.trim())}`,
-    );
+    setLoading(true);
+    const result = await forgotPassword(value);
+    setLoading(false);
+
+    if (!result.ok) {
+      setError(result.message ?? "Unable to send reset code.");
+      return;
+    }
+
+    setSuccess(result.message ?? "A reset code has been sent.");
+    router.push(`/reset-password?email=${encodeURIComponent(value)}`);
   };
 
   return (
@@ -83,59 +60,38 @@ export default function ForgotPassword() {
             <Mail size={24} className="text-[#1D6076]" strokeWidth={2} />
           </div>
 
-          <h1
-            className="text-3xl text-gray-900 mb-2"
-            style={{ fontWeight: 800, letterSpacing: "-0.02em" }}
-          >
+          <h1 className="text-3xl text-gray-900 mb-2" style={{ fontWeight: 800, letterSpacing: "-0.02em" }}>
             Forgot your password?
           </h1>
 
           <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-            Enter your email address and we&apos;ll ask the backend to send you a
-            one-time reset code.
+            Enter your email and we will send you the OTP reset code.
           </p>
 
           {error && (
             <div className="flex items-center gap-2.5 bg-red-50 border border-red-100 rounded-2xl px-4 py-3 mb-5">
-              <AlertCircle
-                size={16}
-                className="text-red-500 shrink-0"
-                strokeWidth={2}
-              />
+              <AlertCircle size={16} className="text-red-500 shrink-0" strokeWidth={2} />
               <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
 
           {success && (
             <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3 mb-5">
-              <CheckCircle2
-                size={16}
-                className="text-emerald-600 shrink-0"
-                strokeWidth={2}
-              />
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" strokeWidth={2} />
               <p className="text-emerald-700 text-sm">{success}</p>
             </div>
           )}
 
-          <form onSubmit={handleRequestOtp} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Email
-              </label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Email</label>
               <div className="relative">
                 <input
                   type="email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                    setErrors((previous) => ({ ...previous, email: "" }));
-                  }}
-                  className={`w-full bg-gray-50 border rounded-2xl px-4 py-3.5 pl-11 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all ${
-                    errors.email
-                      ? "border-red-300 focus:ring-red-200"
-                      : "border-gray-200 focus:border-[#1D6076] focus:ring-[#1D6076]/20"
-                  }`}
+                  onChange={(event) => setEmail(event.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5 pl-11 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:border-[#1D6076] focus:ring-[#1D6076]/20 transition-all"
                 />
                 <Mail
                   size={16}
@@ -143,12 +99,6 @@ export default function ForgotPassword() {
                   strokeWidth={2}
                 />
               </div>
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-                  <AlertCircle size={11} />
-                  {errors.email}
-                </p>
-              )}
             </div>
 
             <button
@@ -162,10 +112,7 @@ export default function ForgotPassword() {
                   Sending code...
                 </>
               ) : (
-                <>
-                  <Mail size={16} strokeWidth={2} />
-                  Send reset code
-                </>
+                "Send reset code"
               )}
             </button>
           </form>

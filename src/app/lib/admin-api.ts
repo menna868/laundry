@@ -1,3 +1,5 @@
+import { getStoredAuthToken } from "@/app/lib/auth-storage";
+
 const FALLBACK_API_BASE_URL = "/api/backend";
 const API_BASE_STORAGE_KEY = "nadeef_admin_api_base_url";
 
@@ -19,17 +21,7 @@ function resolveApiBaseUrl() {
 }
 
 function getToken() {
-  const raw = localStorage.getItem("nadeef_session");
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed.token || parsed.Token || null;
-  } catch {
-    return null;
-  }
+  return getStoredAuthToken();
 }
 
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {

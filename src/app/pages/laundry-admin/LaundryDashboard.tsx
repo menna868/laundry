@@ -5,10 +5,8 @@ import {
   TrendingDown, 
   Package, 
   Clock, 
-  CheckCircle, 
   DollarSign,
   Star,
-  Users,
   ChevronRight,
   Filter,
   Download,
@@ -244,7 +242,7 @@ export function LaundryDashboard() {
                 <YAxis dataKey="name" type="category" hide />
                 <RechartsTooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }} />
                 <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={24}>
-                  {servicePerformance.map((entry, index) => (
+                  {servicePerformance.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>

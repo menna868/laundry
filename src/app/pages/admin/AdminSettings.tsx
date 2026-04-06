@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import {
   Settings as SettingsIcon, Shield, Bell, Key, Globe, Monitor,
-  Save, Smartphone, CreditCard, Lock
+  Save, CreditCard, Lock
 } from "lucide-react";
 import clsx from "clsx";
 

@@ -26,7 +26,7 @@ export function Header({ setSidebarOpen }: { setSidebarOpen: (v: boolean) => voi
   useEffect(() => {
     async function fetchNotes() {
       try {
-        const res = await apiRequest<any>("/api/notifications?pageSize=5");
+        const res = await apiRequest<any>("/notifications?pageSize=5");
         const list = Array.isArray(res) ? res : res.data || [];
         setNotes(list);
         setUnreadCount(list.filter((n: any) => !n.isRead).length);

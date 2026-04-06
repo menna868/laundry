@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
   TrendingUp,
@@ -26,7 +26,7 @@ import {
   Cell
 } from "recharts";
 
-import { apiRequest } from "../lib/admin-api";
+import { apiRequest, ApiError } from "../lib/admin-api";
 
 interface SystemAnalyticsData {
   totalRevenue: number;
@@ -77,28 +77,57 @@ function getStatusBadge(status: string) {
 export function SuperAdminDashboard() {
   const [data, setData] = useState<SystemAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    async function loadDashboard() {
-      try {
-        const response = await apiRequest<SystemAnalyticsData>("/analytics/system");
-        if (!isMounted) return;
-        setData(response);
-      } catch (err) {
-        console.error("Dashboard hook failed", err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiRequest<SystemAnalyticsData>("/analytics/system");
+      setData(response);
+    } catch (err) {
+      console.error("Dashboard hook failed", err);
+      setData(null);
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Could not load system analytics. Sign in as SuperAdmin and try again.",
+      );
+    } finally {
+      setLoading(false);
     }
-    loadDashboard();
-    return () => { isMounted = false; };
   }, []);
 
-  if (loading || !data) {
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
+
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2A5C66]"></div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="rounded-2xl border border-red-100 bg-red-50/80 p-6 text-center max-w-lg mx-auto mt-12">
+        <p className="text-sm font-medium text-red-800 mb-1">Dashboard data unavailable</p>
+        <p className="text-xs text-red-700/90 mb-4">{error ?? "No data returned."}</p>
+        <p className="text-[11px] text-slate-500 mb-4">
+          Backend: <code className="bg-white/80 px-1 rounded">GET /api/analytics/system</code> requires role{" "}
+          <strong>SuperAdmin</strong> and a valid JWT (same session as the app).
+        </p>
+        <button
+          type="button"
+          onClick={() => loadDashboard()}
+          className="text-sm font-semibold text-white bg-[#2A5C66] rounded-xl px-4 py-2 hover:bg-[#2A5C66]/90"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -108,7 +137,9 @@ export function SuperAdminDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#1e293b]">Dashboard Overview</h1>
-          <p className="text-[13px] text-slate-500 mt-1">Real-time performance metrics and system health.</p>
+          <p className="text-[13px] text-slate-500 mt-1">
+            Data from <code className="text-[11px] bg-slate-100 px-1 rounded">GET /api/analytics/system</code> (SuperAdmin).
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <select className="bg-white border border-slate-200 text-slate-700 text-[13px] rounded-xl px-4 py-2 outline-none focus:border-[#2A5C66] focus:ring-1 focus:ring-[#2A5C66]">
@@ -332,7 +363,10 @@ export function SuperAdminDashboard() {
                 <div key={order.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors">
                   <div className="flex flex-col">
                     <span className="text-[13px] font-bold text-slate-800">{order.id} &bull; <span className="font-semibold text-slate-600">{order.customer}</span></span>
-                    <span className="text-[11px] text-slate-400 mt-0.5">{order.laundry} &bull; {formatTimeAgo(order.time)}</span>
+                    <span className="text-[11px] text-slate-400 mt-0.5">
+                      {order.laundry} &bull;{" "}
+                      {Number.isNaN(Date.parse(order.time)) ? order.time : formatTimeAgo(order.time)}
+                    </span>
                   </div>
                   <div className="flex flex-col items-end gap-1.5">
                     <span className="text-[13px] font-bold text-slate-800">{order.amount}</span>

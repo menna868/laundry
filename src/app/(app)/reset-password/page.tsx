@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Suspense } from "react";
-import ResetPassword from "@/app/pages/ResetPassword";
+import { Suspense } from 'react';
+import ResetPassword from '@/app/pages/ResetPassword';
 
 export default function Page() {
   return (
