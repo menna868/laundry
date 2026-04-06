@@ -7,9 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { GoogleLogin } from '@react-oauth/google';
 
-import sideImg from '../../assets/c3cadfc0d53d76910fffbccca80883d33cdb8d15.png';
-
-const SIDE_IMG = sideImg;
+const SIDE_IMG = 'https://images.unsplash.com/photo-1711783059489-8a0da5564785?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800';
 
 export default function Login() {
   const router = useRouter();

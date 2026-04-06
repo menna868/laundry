@@ -10,7 +10,7 @@ import {
   Loader2,
   Mail,
 } from "lucide-react";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function ForgotPassword() {
   const router = useRouter();

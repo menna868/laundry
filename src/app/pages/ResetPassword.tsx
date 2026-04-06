@@ -12,7 +12,7 @@ import {
   Mail,
   ShieldCheck,
 } from "lucide-react";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function ResetPassword() {
   const router = useRouter();
